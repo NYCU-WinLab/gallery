@@ -1,6 +1,7 @@
 import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm"
 import { z } from "zod"
 
+import { memberUserId } from "@/lib/actions/admins"
 import { requireAdmin } from "@/lib/actions/authz"
 import { defineAction } from "@/lib/actions/define"
 import { db } from "@/lib/db"
@@ -186,8 +187,9 @@ export const labelFaces = defineAction({
     faceIds: z.array(z.uuid()).min(1, "請選擇臉").max(1000),
     memberId: z.uuid("請選擇成員").nullable(),
   }),
-  run: async (actor, { faceIds, memberId }) => {
+  run: async (actor, { faceIds, memberId: id }) => {
     await requireAdmin(actor)
+    const memberId = id && (await memberUserId(id))
     const changed = await db
       .update(faces)
       .set({ memberId, labeledBy: "admin", labeledAt: new Date() })
