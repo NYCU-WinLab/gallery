@@ -15,7 +15,7 @@
 
 [![CI](https://github.com/NYCU-WinLab/gallery/actions/workflows/ci.yml/badge.svg)](https://github.com/NYCU-WinLab/gallery/actions) &nbsp;[![Image](https://img.shields.io/badge/image-ghcr.io%2Fnycu--winlab%2Fgallery-111111)](https://github.com/NYCU-WinLab/gallery/pkgs/container/gallery) &nbsp;[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](#license)
 
-WinLab members share lab photos here: upload from a phone, react, comment, tag, and gather photos into albums. Only signed-in members see anything; every file passes through the app, which checks the session first.
+WinLab members share lab photos here: upload from a phone, react, comment and tag. Only signed-in members see anything; every file passes through the app, which checks the session first.
 
 ```
 > "What did we post from last year's orientation?"
@@ -28,7 +28,7 @@ WinLab members share lab photos here: upload from a phone, react, comment, tag, 
 - **Shows the wall**: newest taken first, pinned on top, photos uploaded together as one card, filtered by search, tag, uploader or favorites.
 - **Takes uploads**: photos up to 30 MB (HEIC turns into JPEG) and videos up to 60 seconds and 100 MB (re-encoded to 720p H.264).
 - **Stores files in Nextcloud** under one folder of one account, with a 480 px and a 2048 px WebP made at upload.
-- **Lets members react, comment and tag**: 8 reactions, two-level comments, tags, favorites, albums and "on this day" memories.
+- **Lets members react, comment and tag**: 8 reactions, two-level comments, tags and favorites.
 - **Serves MCP** at `/mcp`, with the gallery as the OAuth 2.1 authorization server.
 
 ## Deploy

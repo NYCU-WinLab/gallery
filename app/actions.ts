@@ -5,12 +5,6 @@ import type { z } from "zod"
 import { type Action, errorMessage, runAction } from "@/lib/actions/define"
 import { grantAdmin, revokeAdmin } from "@/lib/actions/admins"
 import {
-  createAlbum,
-  deleteAlbum,
-  setAlbumPhotos,
-  updateAlbum,
-} from "@/lib/actions/albums"
-import {
   addComment,
   deleteComment,
   editComment,
@@ -60,12 +54,6 @@ export const removeComment = async (input: unknown) =>
 export const pinCommentAction = async (input: unknown) =>
   call(pinComment, input)
 export const like = async (input: unknown) => call(likeComment, input)
-
-export const newAlbum = async (input: unknown) => call(createAlbum, input)
-export const saveAlbum = async (input: unknown) => call(updateAlbum, input)
-export const removeAlbum = async (input: unknown) => call(deleteAlbum, input)
-export const arrangeAlbum = async (input: unknown) =>
-  call(setAlbumPhotos, input)
 
 export const saveTagName = async (input: unknown) => call(renameTag, input)
 export const removeTag = async (input: unknown) => call(deleteTag, input)

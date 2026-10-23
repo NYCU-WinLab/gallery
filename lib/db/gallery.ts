@@ -8,7 +8,6 @@ import {
   real,
   text,
   timestamp,
-  uniqueIndex,
   uuid,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core"
@@ -133,35 +132,6 @@ export const photoTags = pgTable(
     primaryKey({ columns: [table.photoId, table.tagId] }),
     index("photo_tags_tag").on(table.tagId),
   ]
-)
-
-export const albums = pgTable(
-  "albums",
-  {
-    id: uuid().primaryKey().defaultRandom(),
-    slug: text().notNull(),
-    title: text().notNull(),
-    description: text().notNull().default(""),
-    coverPhotoId: uuid().references(() => photos.id, { onDelete: "set null" }),
-    createdBy: uuid().references(() => user.id, { onDelete: "set null" }),
-    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
-  },
-  (table) => [uniqueIndex("albums_slug").on(table.slug)]
-)
-
-export const albumPhotos = pgTable(
-  "album_photos",
-  {
-    albumId: uuid()
-      .notNull()
-      .references(() => albums.id, { onDelete: "cascade" }),
-    photoId: uuid()
-      .notNull()
-      .references(() => photos.id, { onDelete: "cascade" }),
-    position: integer().notNull(),
-  },
-  (table) => [primaryKey({ columns: [table.albumId, table.photoId] })]
 )
 
 export const favorites = pgTable(

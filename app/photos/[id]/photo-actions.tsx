@@ -16,27 +16,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
-import {
-  arrangeAlbum,
-  favorite,
-  pin,
-  removePhoto,
-  savePhoto,
-  saveTags,
-} from "../../actions"
+import { favorite, pin, removePhoto, savePhoto, saveTags } from "../../actions"
 
 type Photo = {
   id: string
@@ -47,7 +33,6 @@ type Photo = {
   canEdit: boolean
   isAdmin: boolean
   pinnedAt: Date | null
-  albums: { slug: string }[]
 }
 
 /** For datetime-local, in Taipei time. */
@@ -63,17 +48,9 @@ function fail(result: { error?: string }) {
   }
 }
 
-export function PhotoActions({
-  photo,
-  albums,
-}: {
-  photo: Photo
-  albums: { id: string; title: string }[]
-}) {
+export function PhotoActions({ photo }: { photo: Photo }) {
   const router = useRouter()
-  const [dialog, setDialog] = React.useState<
-    "edit" | "album" | "delete" | null
-  >(null)
+  const [dialog, setDialog] = React.useState<"edit" | "delete" | null>(null)
   const [liked, setLiked] = React.useOptimistic(photo.favorite)
   const [, startTransition] = React.useTransition()
   const close = (open: boolean) => !open && setDialog(null)
@@ -117,7 +94,7 @@ export function PhotoActions({
         </TooltipTrigger>
         <TooltipContent>下載原檔</TooltipContent>
       </Tooltip>
-      {(photo.canEdit || albums.length > 0) && (
+      {photo.canEdit && (
         <DropdownMenu>
           <DropdownMenuTrigger
             render={<Button variant="outline" size="icon" aria-label="更多" />}
@@ -128,11 +105,6 @@ export function PhotoActions({
             {photo.canEdit && (
               <DropdownMenuItem onClick={() => setDialog("edit")}>
                 編輯
-              </DropdownMenuItem>
-            )}
-            {albums.length > 0 && (
-              <DropdownMenuItem onClick={() => setDialog("album")}>
-                加入相簿
               </DropdownMenuItem>
             )}
             {photo.isAdmin && (
@@ -193,38 +165,6 @@ export function PhotoActions({
         </FormField>
         <FormField label="標籤（逗號或空白分隔）">
           <Input name="tags" defaultValue={photo.tags.join(", ")} />
-        </FormField>
-      </FormDialog>
-      <FormDialog
-        open={dialog === "album"}
-        onOpenChange={close}
-        title="加入相簿"
-        submitLabel="加入"
-        onSubmit={async (data) => {
-          fail(await arrangeAlbum({ id: data.get("album"), add: [photo.id] }))
-          toast.success("已加入")
-        }}
-      >
-        <FormField label="相簿" required>
-          <Select
-            name="album"
-            required
-            items={albums.map((album) => ({
-              value: album.id,
-              label: album.title,
-            }))}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="選擇相簿" />
-            </SelectTrigger>
-            <SelectContent>
-              {albums.map((album) => (
-                <SelectItem key={album.id} value={album.id}>
-                  {album.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </FormField>
       </FormDialog>
       <ConfirmDialog

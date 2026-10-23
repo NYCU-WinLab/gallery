@@ -19,8 +19,6 @@ import { isAdmin, requireAdmin } from "@/lib/actions/authz"
 import { defineAction, type Actor } from "@/lib/actions/define"
 import { db } from "@/lib/db"
 import {
-  albumPhotos,
-  albums,
   favorites,
   photoReactions,
   photos,
@@ -128,7 +126,7 @@ export const getPhoto = defineAction({
   name: "get_photo",
   title: "照片",
   description:
-    "One photo with everything around it: uploader, the other photos of its sequence, tags, albums, reaction counts and the caller's own reaction, whether the caller favorited it, and whether the caller may edit it. Comments come from list_comments.",
+    "One photo with everything around it: uploader, the other photos of its sequence, tags, reaction counts and the caller's own reaction, whether the caller favorited it, and whether the caller may edit it. Comments come from list_comments.",
   kind: "query",
   input: z.object({ id: z.uuid() }),
   run: async (actor, { id }) => {
@@ -144,7 +142,7 @@ export const getPhoto = defineAction({
       .leftJoin(user, eq(user.id, photos.uploaderId))
       .where(eq(photos.id, id))
     if (!photo) throw new Error("找不到這張照片")
-    const [sequence, photoTagRows, albumRows, reactionRows, favorite, admin] =
+    const [sequence, photoTagRows, reactionRows, favorite, admin] =
       await Promise.all([
         photo.sequenceId
           ? db
@@ -172,12 +170,6 @@ export const getPhoto = defineAction({
           .where(eq(photoTags.photoId, id))
           .orderBy(asc(tags.name)),
         db
-          .select({ slug: albums.slug, title: albums.title })
-          .from(albumPhotos)
-          .innerJoin(albums, eq(albums.id, albumPhotos.albumId))
-          .where(eq(albumPhotos.photoId, id))
-          .orderBy(asc(albums.title)),
-        db
           .select({
             reaction: photoReactions.reaction,
             userId: photoReactions.userId,
@@ -199,7 +191,6 @@ export const getPhoto = defineAction({
       ...photo,
       sequence,
       tags: photoTagRows.map((row) => row.name),
-      albums: albumRows,
       reactions: reactionRows,
       myReaction:
         reactionRows.find((row) => row.userId === actor.userId)?.reaction ??
@@ -407,60 +398,6 @@ export const setFavorite = defineAction({
           )
         )
     return { photoId, favorite }
-  },
-})
-
-export const listMemories = defineAction({
-  name: "list_memories",
-  title: "回憶",
-  description:
-    "Photos taken on this month and day in earlier years (Taipei time), grouped by year, newest year first. date (yyyy-mm-dd) picks another day.",
-  kind: "query",
-  input: z.object({
-    date: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/)
-      .optional(),
-  }),
-  run: async (_actor, { date }) => {
-    const day =
-      date ??
-      new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(
-        new Date()
-      )
-    const [year, month, dom] = day.split("-").map(Number)
-    const local = sql`(${photos.takenAt} at time zone 'Asia/Taipei')`
-    const rows = await db
-      .select({ ...card, sequenceSize, reactionCount, commentCount })
-      .from(photos)
-      .leftJoin(user, eq(user.id, photos.uploaderId))
-      .where(
-        and(
-          isCover,
-          sql`extract(month from ${local}) = ${month}`,
-          sql`extract(day from ${local}) = ${dom}`,
-          sql`extract(year from ${local}) < ${year}`
-        )
-      )
-      .orderBy(desc(photos.takenAt))
-    const years = new Map<number, typeof rows>()
-    for (const row of rows) {
-      const y = Number(
-        new Intl.DateTimeFormat("en-CA", {
-          timeZone: "Asia/Taipei",
-          year: "numeric",
-        }).format(row.takenAt)
-      )
-      years.set(y, [...(years.get(y) ?? []), row])
-    }
-    return {
-      date: day,
-      years: [...years].map(([y, list]) => ({
-        year: y,
-        yearsAgo: year - y,
-        photos: list,
-      })),
-    }
   },
 })
 

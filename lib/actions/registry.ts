@@ -5,14 +5,6 @@ import {
   revokeAdmin,
 } from "@/lib/actions/admins"
 import {
-  createAlbum,
-  deleteAlbum,
-  getAlbum,
-  listAlbums,
-  setAlbumPhotos,
-  updateAlbum,
-} from "@/lib/actions/albums"
-import {
   addComment,
   deleteComment,
   editComment,
@@ -25,7 +17,6 @@ import {
   deletePhoto,
   getPhoto,
   getPhotoFile,
-  listMemories,
   listPhotos,
   listUploaders,
   pinPhoto,
@@ -49,7 +40,6 @@ export const actions: Action[] = [
   getPhoto,
   getPhotoFile,
   listUploaders,
-  listMemories,
   uploadPhoto,
   updatePhoto,
   deletePhoto,
@@ -66,12 +56,6 @@ export const actions: Action[] = [
   setPhotoTags,
   renameTag,
   deleteTag,
-  listAlbums,
-  getAlbum,
-  createAlbum,
-  updateAlbum,
-  deleteAlbum,
-  setAlbumPhotos,
   listMembers,
   listAdmins,
   grantAdmin,

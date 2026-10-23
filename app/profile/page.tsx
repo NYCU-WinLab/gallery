@@ -22,9 +22,7 @@ export default async function ProfilePage() {
   const actor = await requireActor("/profile")
   const member = await runAction(whoami, actor, {})
   return (
-    <GalleryShell
-      page={{ label: member.name, href: "/profile", tip: "你的帳號" }}
-    >
+    <GalleryShell page={{ label: member.name, href: "/profile", tip: "" }}>
       <div className="flex flex-col gap-12">
         <PageHeader title={member.name} actions={<SignOutButton />} />
         <FieldList>
