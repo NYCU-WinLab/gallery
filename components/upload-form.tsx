@@ -58,7 +58,7 @@ function send(
   })
 }
 
-export function UploadForm() {
+export function UploadForm({ onDone }: { onDone?: () => void }) {
   const router = useRouter()
   const [files, setFiles] = React.useState<File[]>([])
   const [names, setNames] = React.useState<string[]>([])
@@ -98,9 +98,8 @@ export function UploadForm() {
     setProgress(null)
     if (done.length === 0) return
     toast.success(`已上傳 ${done.length} 個`)
-    router.push(
-      done.length === 1 || sequenceId ? `/photos/${done[0]}` : "/?mine=1"
-    )
+    onDone?.()
+    router.push(done.length === 1 || sequenceId ? `/photos/${done[0]}` : "/")
   }
 
   const busy = progress !== null

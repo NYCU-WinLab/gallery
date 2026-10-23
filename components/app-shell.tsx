@@ -232,4 +232,10 @@ function CornerLink({
   return <Link className={cn(cornerLink, className)} {...props} />
 }
 
-export { AppShell, CornerLink, CornerTip }
+export {
+  AppShell,
+  BuildVersion,
+  CornerLink,
+  CornerTip,
+  cornerLink as cornerLinkClassName,
+}
