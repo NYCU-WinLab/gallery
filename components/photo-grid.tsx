@@ -1,5 +1,7 @@
 import Link from "next/link"
-import { CopyIcon, HeartIcon, PlayIcon } from "lucide-react"
+import { CopyIcon, PlayIcon } from "lucide-react"
+
+import { reactionEmoji, type ReactionName } from "@/lib/reactions"
 
 export type GridPhoto = {
   id: string
@@ -9,7 +11,8 @@ export type GridPhoto = {
   height: number
   durationSeconds: number | null
   sequenceSize?: number
-  reactionCount?: number
+  /** How many picked each reaction. */
+  reactionCounts?: Record<string, number>
 }
 
 /** 0:42 */
@@ -20,9 +23,11 @@ export function duration(seconds: number) {
 
 // One card on a wall: the thumbnail at its own shape, with what the
 // thumbnail cannot show (a video, a set of photos) in the corner,
-// and the reaction count under it.
+// and the reactions under it, each with its count when more than one.
 export function PhotoCard({ photo }: { photo: GridPhoto }) {
-  const counts = (photo.reactionCount ?? 0) > 0
+  const reactions = (Object.keys(reactionEmoji) as ReactionName[]).filter(
+    (name) => (photo.reactionCounts?.[name] ?? 0) > 0
+  )
   return (
     <Link href={`/photos/${photo.id}`} className="group flex flex-col gap-2">
       <span className="relative block overflow-hidden rounded-control bg-muted">
@@ -53,14 +58,14 @@ export function PhotoCard({ photo }: { photo: GridPhoto }) {
       </span>
       <span className="flex items-center gap-3 text-muted-foreground">
         <span className="min-w-0 flex-1 truncate">{photo.name}</span>
-        {counts && (
-          <span className="flex shrink-0 items-center gap-3 tabular-nums">
-            {!!photo.reactionCount && (
-              <span className="flex items-center gap-1">
-                <HeartIcon className="size-4" />
-                {photo.reactionCount}
+        {reactions.length > 0 && (
+          <span className="flex shrink-0 items-center gap-2 tabular-nums">
+            {reactions.map((name) => (
+              <span key={name} className="flex items-center gap-1">
+                <span>{reactionEmoji[name]}</span>
+                {photo.reactionCounts![name] > 1 && photo.reactionCounts![name]}
               </span>
-            )}
+            ))}
           </span>
         )}
       </span>
