@@ -1,29 +1,106 @@
-import { asc, eq } from "drizzle-orm"
+import { and, asc, eq, sql } from "drizzle-orm"
 import { z } from "zod"
 
 import { requireAdmin } from "@/lib/actions/authz"
 import { defineAction } from "@/lib/actions/define"
 import { db } from "@/lib/db"
-import { admins, user } from "@/lib/db/schema"
+import { account, admins, user } from "@/lib/db/schema"
+import { labMembers } from "@/lib/keycloak"
 
 export const listMembers = defineAction({
   name: "list_members",
   title: "成員名單",
   description:
-    "Every member who has signed in to the gallery: id, name (Chinese), account name and email, sorted by name.",
+    "Every WinLab member (Keycloak /lab-member, alumni included) and everyone who has signed in to the gallery: id, name (Chinese), account name and email, sorted by name. The id works wherever a member id is asked for, even for members who never signed in.",
   kind: "query",
   input: z.object({}),
-  run: async () =>
-    db
-      .select({
-        id: user.id,
-        name: user.name,
-        username: user.username,
-        email: user.email,
-      })
-      .from(user)
-      .orderBy(asc(user.name)),
+  run: async () => {
+    const [rows, lab] = await Promise.all([
+      db
+        .select({
+          id: user.id,
+          name: user.name,
+          username: user.username,
+          email: user.email,
+          sub: account.accountId,
+        })
+        .from(user)
+        .leftJoin(
+          account,
+          and(eq(account.userId, user.id), eq(account.providerId, "keycloak"))
+        ),
+      // Without Keycloak, the list is who has signed in.
+      labMembers().catch(() => []),
+    ])
+    const known = new Set(rows.map((row) => row.sub))
+    const members = [
+      ...rows.map(({ id, name, username, email }) => ({
+        id,
+        name,
+        username,
+        email,
+      })),
+      // Members who never signed in go by their Keycloak id until they do.
+      ...lab
+        .filter((member) => !known.has(member.sub))
+        .map((member) => ({
+          id: member.sub,
+          name: member.name,
+          username: member.username,
+          email: member.email ?? "",
+        })),
+    ]
+    return members.sort((a, b) => a.name.localeCompare(b.name, "zh-TW"))
+  },
 })
+
+/** The gallery user for a member id from list_members. A lab member who
+ * never signed in gets their user now, linked to their Keycloak account
+ * the way sign-in links it, so their first sign-in lands on it. */
+export async function memberUserId(id: string) {
+  const [existing] = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(eq(user.id, id))
+  if (existing) return existing.id
+  const [linked] = await db
+    .select({ userId: account.userId })
+    .from(account)
+    .where(and(eq(account.providerId, "keycloak"), eq(account.accountId, id)))
+  if (linked) return linked.userId
+  const member = (await labMembers()).find((m) => m.sub === id)
+  if (!member) throw new Error("找不到這位成員")
+  return db.transaction(async (tx) => {
+    // Two admins naming the same new member at once: the second waits here
+    // and finds the first one's user.
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${id}))`)
+    const [again] = await tx
+      .select({ userId: account.userId })
+      .from(account)
+      .where(and(eq(account.providerId, "keycloak"), eq(account.accountId, id)))
+    if (again) return again.userId
+    const [created] = await tx
+      .insert(user)
+      .values({
+        name: member.name,
+        // users.email is unique and required; sign-in replaces this with
+        // the Keycloak email.
+        email: member.email ?? `${member.sub}@keycloak.invalid`,
+        emailVerified: false,
+        username: member.username,
+      })
+      .onConflictDoNothing({ target: user.email })
+      .returning({ id: user.id })
+    if (!created) throw new Error("這位成員的信箱已被另一個帳號使用")
+    await tx.insert(account).values({
+      accountId: member.sub,
+      providerId: "keycloak",
+      userId: created.id,
+      updatedAt: new Date(),
+    })
+    return created.id
+  })
+}
 
 export const listAdmins = defineAction({
   name: "list_admins",
@@ -51,13 +128,14 @@ export const grantAdmin = defineAction({
   input: memberInput,
   run: async (actor, { userId }) => {
     await requireAdmin(actor)
+    const memberId = await memberUserId(userId)
     const [added] = await db
       .insert(admins)
-      .values({ userId, grantedBy: actor.userId })
+      .values({ userId: memberId, grantedBy: actor.userId })
       .onConflictDoNothing()
       .returning({ userId: admins.userId })
     if (!added) throw new Error("已經是管理員了")
-    return { userId }
+    return { userId: memberId }
   },
 })
 
