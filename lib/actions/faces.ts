@@ -79,6 +79,8 @@ async function matchFaces(ids?: string[]) {
     if (member === face.memberId) continue
     moves.set(member, [...(moves.get(member) ?? []), face.id])
   }
+  // Checked again on write: an admin may have decided on a face since it
+  // was read, and the matcher never overrides an admin.
   for (const [member, faceIds] of moves)
     await db
       .update(faces)
@@ -87,7 +89,12 @@ async function matchFaces(ids?: string[]) {
         labeledBy: member ? "auto" : null,
         labeledAt: member ? new Date() : null,
       })
-      .where(inArray(faces.id, faceIds))
+      .where(
+        and(
+          inArray(faces.id, faceIds),
+          or(isNull(faces.labeledBy), eq(faces.labeledBy, "auto"))
+        )
+      )
   return [...moves.values()].reduce((n, list) => n + list.length, 0)
 }
 
@@ -211,9 +218,11 @@ export const getFace = defineAction({
 })
 
 let running = false
-// Photos whose file is missing; skipped until the server restarts so they
-// cannot hold up the queue.
-const missing = new Set<string>()
+// Photos whose file is missing, or that failed MAX_FAILURES times; skipped
+// until the server restarts so they cannot hold up the queue.
+const skipped = new Set<string>()
+const failures = new Map<string, number>()
+const MAX_FAILURES = 3
 
 /** Finds the faces in photos not looked at yet, one photo at a time, and
  * names those close to a named face. Returns how many photos it did. */
@@ -224,17 +233,28 @@ async function scanPending(limit: number) {
     .leftJoin(faceScans, eq(faceScans.photoId, photos.id))
     .where(isNull(faceScans.photoId))
     .orderBy(desc(photos.createdAt))
-    .limit(limit + missing.size)
+    .limit(limit + skipped.size)
   let done = 0
   for (const { id } of pending
-    .filter((p) => !missing.has(p.id))
+    .filter((p) => !skipped.has(p.id))
     .slice(0, limit)) {
     const file = await getPhotoFile(id, "large.webp")
     if (!file) {
-      missing.add(id)
+      skipped.add(id)
       continue
     }
-    const found = await findFaces(new Uint8Array(await file.arrayBuffer()))
+    let found: Awaited<ReturnType<typeof findFaces>>
+    try {
+      found = await findFaces(new Uint8Array(await file.arrayBuffer()))
+    } catch (error) {
+      // One bad photo must not stall the rest; a service that is down
+      // fails every photo, so the batch stops here and retries later.
+      const count = (failures.get(id) ?? 0) + 1
+      failures.set(id, count)
+      if (count >= MAX_FAILURES) skipped.add(id)
+      throw error
+    }
+    failures.delete(id)
     const kept = found.faces.filter(
       ({ box: [x1, y1, x2, y2], score }) =>
         score >= MIN_SCORE && Math.min(x2 - x1, y2 - y1) >= MIN_SIDE

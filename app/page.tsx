@@ -22,6 +22,9 @@ type Search = {
 // 我上傳的 and 收藏 on the profile, open it filtered; then one line says so.
 export default async function Wall({ searchParams }: PageProps<"/">) {
   const search = (await searchParams) as Search
+  // A mangled link shows the whole wall instead of failing.
+  if (search.person && !/^[0-9a-f-]{36}$/.test(search.person))
+    search.person = undefined
   const actor = await requireActor("/")
   const filters = {
     tag: search.tag || undefined,

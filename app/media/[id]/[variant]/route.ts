@@ -36,15 +36,16 @@ async function cachedFile(id: string, variant: "thumb" | "large") {
 }
 
 async function faceCrop(faceId: string, actor: { userId: string }) {
-  const cached = join(cacheDir, `${faceId}-face.webp`)
-  const hit = await readFile(cached).catch(() => null)
-  if (hit) return hit
+  // Looked up before the cache: a face gone with its photo is never served.
   const face = await runAction(
     getFace,
     { ...actor, via: "web" },
     { id: faceId }
   )
   if (!face) return null
+  const cached = join(cacheDir, `${faceId}-face.webp`)
+  const hit = await readFile(cached).catch(() => null)
+  if (hit) return hit
   const large = await cachedFile(face.photoId, "large")
   if (!large) return null
   const { width = 0, height = 0 } = await sharp(large).metadata()

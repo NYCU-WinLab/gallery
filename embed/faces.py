@@ -122,10 +122,11 @@ class Faces:
 
     def detect(self, bgr):
         height, width = bgr.shape[:2]
+        # At least 1 pixel, so a very thin image still resizes.
         if height / width > 1:
-            new_h, new_w = DET_SIZE, int(DET_SIZE * width / height)
+            new_h, new_w = DET_SIZE, max(1, int(DET_SIZE * width / height))
         else:
-            new_w, new_h = DET_SIZE, int(DET_SIZE * height / width)
+            new_w, new_h = DET_SIZE, max(1, int(DET_SIZE * height / width))
         scale = new_h / height
         canvas = np.zeros((DET_SIZE, DET_SIZE, 3), dtype=np.uint8)
         canvas[:new_h, :new_w] = cv2.resize(bgr, (new_w, new_h))
