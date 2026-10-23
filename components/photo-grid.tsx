@@ -1,0 +1,118 @@
+import Link from "next/link"
+import {
+  CopyIcon,
+  HeartIcon,
+  MessageCircleIcon,
+  PinIcon,
+  PlayIcon,
+} from "lucide-react"
+
+export type GridPhoto = {
+  id: string
+  name: string
+  mediaType: string
+  width: number
+  height: number
+  durationSeconds: number | null
+  sequenceSize?: number
+  reactionCount?: number
+  commentCount?: number
+  pinnedAt?: Date | null
+}
+
+/** 0:42 */
+export function duration(seconds: number) {
+  const s = Math.round(seconds)
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`
+}
+
+// One card on a wall: the thumbnail at its own shape, with what the
+// thumbnail cannot show (a video, a set of photos, a pin) in the corner,
+// and reaction and comment counts under it.
+export function PhotoCard({
+  photo,
+  href,
+  footer,
+}: {
+  photo: GridPhoto
+  href?: string
+  /** Under the card, outside its link: tools for this photo. */
+  footer?: React.ReactNode
+}) {
+  const counts = (photo.reactionCount ?? 0) + (photo.commentCount ?? 0) > 0
+  return (
+    <li className="mb-4 break-inside-avoid">
+      <Link
+        href={href ?? `/photos/${photo.id}`}
+        className="group flex flex-col gap-2"
+      >
+        <span className="relative block overflow-hidden rounded-control bg-muted">
+          {/* eslint-disable-next-line @next/next/no-img-element -- served by /media behind the session */}
+          <img
+            src={`/media/${photo.id}/thumb`}
+            alt={photo.name}
+            width={photo.width}
+            height={photo.height}
+            loading="lazy"
+            decoding="async"
+            className="block h-auto w-full transition-opacity duration-state group-hover:opacity-90"
+          />
+          <span className="absolute top-2 right-2 flex gap-1">
+            {photo.pinnedAt && (
+              <Badge>
+                <PinIcon />
+              </Badge>
+            )}
+            {photo.mediaType === "video" && (
+              <Badge>
+                <PlayIcon />
+                {photo.durationSeconds ? duration(photo.durationSeconds) : null}
+              </Badge>
+            )}
+            {(photo.sequenceSize ?? 1) > 1 && (
+              <Badge>
+                <CopyIcon />
+                {photo.sequenceSize}
+              </Badge>
+            )}
+          </span>
+        </span>
+        <span className="flex items-center gap-3 text-muted-foreground">
+          <span className="min-w-0 flex-1 truncate">{photo.name}</span>
+          {counts && (
+            <span className="flex shrink-0 items-center gap-3 tabular-nums">
+              {!!photo.reactionCount && (
+                <span className="flex items-center gap-1">
+                  <HeartIcon className="size-4" />
+                  {photo.reactionCount}
+                </span>
+              )}
+              {!!photo.commentCount && (
+                <span className="flex items-center gap-1">
+                  <MessageCircleIcon className="size-4" />
+                  {photo.commentCount}
+                </span>
+              )}
+            </span>
+          )}
+        </span>
+      </Link>
+      {footer}
+    </li>
+  )
+}
+
+function Badge({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="flex h-8 items-center gap-1 rounded-full bg-background/80 px-2 tabular-nums backdrop-blur-md [&_svg]:size-4">
+      {children}
+    </span>
+  )
+}
+
+// Masonry by CSS columns: each photo keeps its shape.
+export function PhotoGrid({ children }: { children: React.ReactNode }) {
+  return (
+    <ul className="columns-2 gap-4 sm:columns-3 lg:columns-4">{children}</ul>
+  )
+}
