@@ -33,12 +33,17 @@ export const listMembers = defineAction({
       labMembers().catch(() => []),
     ])
     const known = new Set(rows.map((row) => row.sub))
+    const bySub = new Map(lab.map((member) => [member.sub, member]))
     const members = [
-      ...rows.map(({ id, name, username, email }) => ({
+      ...rows.map(({ id, name, username, email, sub }) => ({
         id,
         name,
         username,
-        email,
+        // Named before they signed in: show Keycloak's email, not the
+        // placeholder.
+        email: email.endsWith("@keycloak.invalid")
+          ? (bySub.get(sub ?? "")?.email ?? "")
+          : email,
       })),
       // Members who never signed in go by their Keycloak id until they do.
       ...lab
@@ -83,15 +88,14 @@ export async function memberUserId(id: string) {
       .insert(user)
       .values({
         name: member.name,
-        // users.email is unique and required; sign-in replaces this with
-        // the Keycloak email.
-        email: member.email ?? `${member.sub}@keycloak.invalid`,
+        // users.email is unique and required. A placeholder, never the real
+        // email: a real one held here would block whoever Keycloak gives it
+        // to next. Their first sign-in sets the Keycloak email.
+        email: `${member.sub}@keycloak.invalid`,
         emailVerified: false,
         username: member.username,
       })
-      .onConflictDoNothing({ target: user.email })
       .returning({ id: user.id })
-    if (!created) throw new Error("這位成員的信箱已被另一個帳號使用")
     await tx.insert(account).values({
       accountId: member.sub,
       providerId: "keycloak",

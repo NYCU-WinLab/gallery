@@ -74,6 +74,10 @@ export type LabMember = {
 
 const LAB_MEMBERS_TTL_MS = 10 * 60 * 1000
 let labCache: { members: LabMember[]; at: number } | null = null
+// After a failure, callers fall back at once for a minute instead of each
+// waiting out the timeout.
+const LAB_RETRY_MS = 60 * 1000
+let labFailedAt = 0
 
 async function adminGet<T>(path: string): Promise<T> {
   const url = `${issuer().replace("/realms/", "/admin/realms/")}${path}`
@@ -97,6 +101,18 @@ async function adminGet<T>(path: string): Promise<T> {
 export async function labMembers(): Promise<LabMember[]> {
   if (labCache && Date.now() - labCache.at < LAB_MEMBERS_TTL_MS)
     return labCache.members
+  if (Date.now() - labFailedAt < LAB_RETRY_MS)
+    throw new Error("Keycloak lab members unavailable")
+  try {
+    labCache = { members: await fetchLabMembers(), at: Date.now() }
+  } catch (error) {
+    labFailedAt = Date.now()
+    throw error
+  }
+  return labCache.members
+}
+
+async function fetchLabMembers() {
   const root = await adminGet<{ id: string }>("/group-by-path/lab-member")
   const groups = await adminGet<{ id: string }[]>(
     `/groups/${root.id}/children?max=200&briefRepresentation=true`
@@ -120,6 +136,5 @@ export async function labMembers(): Promise<LabMember[]> {
       })
     }
   }
-  labCache = { members: [...bySub.values()], at: Date.now() }
-  return labCache.members
+  return [...bySub.values()]
 }
