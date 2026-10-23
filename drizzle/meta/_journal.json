@@ -29,6 +29,13 @@
       "when": 1792763052019,
       "tag": "0003_faces",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792765960813,
+      "tag": "0004_drop_favorites_comments_pins",
+      "breakpoints": true
     }
   ]
 }

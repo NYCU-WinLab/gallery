@@ -4,14 +4,6 @@ import {
   listMembers,
   revokeAdmin,
 } from "@/lib/actions/admins"
-import {
-  addComment,
-  deleteComment,
-  editComment,
-  likeComment,
-  listComments,
-  pinComment,
-} from "@/lib/actions/comments"
 import type { Action } from "@/lib/actions/define"
 import {
   getFace,
@@ -25,8 +17,6 @@ import {
   getPhotoFile,
   listPhotos,
   listUploaders,
-  pinPhoto,
-  setFavorite,
   setReaction,
   updatePhoto,
   uploadPhoto,
@@ -49,15 +39,7 @@ export const actions: Action[] = [
   uploadPhoto,
   updatePhoto,
   deletePhoto,
-  pinPhoto,
   setReaction,
-  setFavorite,
-  listComments,
-  addComment,
-  editComment,
-  deleteComment,
-  pinComment,
-  likeComment,
   listTags,
   setPhotoTags,
   renameTag,

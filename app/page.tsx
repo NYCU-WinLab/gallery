@@ -14,12 +14,11 @@ export const dynamic = "force-dynamic"
 type Search = {
   tag?: string
   mine?: string
-  favorites?: string
   person?: string
 }
 
 // The wall and nothing above it. A tag or a person on a photo page, or
-// 我上傳的 and 收藏 on the profile, open it filtered; then one line says so.
+// 我上傳的 on the profile, open it filtered; then one line says so.
 export default async function Wall({ searchParams }: PageProps<"/">) {
   const search = (await searchParams) as Search
   // A mangled link shows the whole wall instead of failing.
@@ -30,7 +29,6 @@ export default async function Wall({ searchParams }: PageProps<"/">) {
     tag: search.tag || undefined,
     uploaderId: search.mine ? actor.userId : undefined,
     memberId: search.person || undefined,
-    favorites: search.favorites ? true : undefined,
   }
   const [{ photos, nextOffset }, people] = await Promise.all([
     runAction(listPhotos, actor, filters),
@@ -43,9 +41,7 @@ export default async function Wall({ searchParams }: PageProps<"/">) {
       ? (person?.name ?? "人物")
       : search.mine
         ? "我上傳的"
-        : search.favorites
-          ? "收藏"
-          : null
+        : null
 
   return (
     <GalleryShell layout="wide">

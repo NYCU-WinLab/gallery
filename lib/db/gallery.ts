@@ -9,7 +9,6 @@ import {
   text,
   timestamp,
   uuid,
-  type AnyPgColumn,
 } from "drizzle-orm/pg-core"
 
 import { user } from "@/lib/db/auth-schema"
@@ -50,7 +49,6 @@ export const photos = pgTable(
     sequenceId: uuid(),
     sequenceIndex: integer().notNull().default(0),
     takenAt: timestamp({ withTimezone: true }).notNull(),
-    pinnedAt: timestamp({ withTimezone: true }),
     createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
@@ -78,38 +76,6 @@ export const photoReactions = pgTable(
     primaryKey({ columns: [table.photoId, table.userId] }),
     check("photo_reactions_known", sql.raw(`reaction in (${list(reactions)})`)),
   ]
-)
-
-export const comments = pgTable(
-  "comments",
-  {
-    id: uuid().primaryKey().defaultRandom(),
-    photoId: uuid()
-      .notNull()
-      .references(() => photos.id, { onDelete: "cascade" }),
-    parentId: uuid().references((): AnyPgColumn => comments.id, {
-      onDelete: "cascade",
-    }),
-    authorId: uuid().references(() => user.id, { onDelete: "set null" }),
-    body: text().notNull(),
-    pinnedAt: timestamp({ withTimezone: true }),
-    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
-  },
-  (table) => [index("comments_photo").on(table.photoId, table.createdAt)]
-)
-
-export const commentLikes = pgTable(
-  "comment_likes",
-  {
-    commentId: uuid()
-      .notNull()
-      .references(() => comments.id, { onDelete: "cascade" }),
-    userId: uuid()
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-  },
-  (table) => [primaryKey({ columns: [table.commentId, table.userId] })]
 )
 
 export const tags = pgTable("tags", {
@@ -146,20 +112,6 @@ export const photoVectors = pgTable("photo_vectors", {
   nameText: text().notNull(),
   updatedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
 })
-
-export const favorites = pgTable(
-  "favorites",
-  {
-    userId: uuid()
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    photoId: uuid()
-      .notNull()
-      .references(() => photos.id, { onDelete: "cascade" }),
-    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
-  },
-  (table) => [primaryKey({ columns: [table.userId, table.photoId] })]
-)
 
 export const faceLabelers = ["admin", "auto"] as const
 

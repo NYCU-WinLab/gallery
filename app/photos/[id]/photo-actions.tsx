@@ -1,6 +1,6 @@
 "use client"
 
-import { DownloadIcon, EllipsisIcon, HeartIcon } from "lucide-react"
+import { DownloadIcon, EllipsisIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import * as React from "react"
 import { toast } from "sonner"
@@ -20,19 +20,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils"
 
-import { favorite, pin, removePhoto, savePhoto, saveTags } from "../../actions"
+import { removePhoto, savePhoto, saveTags } from "../../actions"
 
 type Photo = {
   id: string
   name: string
   takenAt: Date
   tags: string[]
-  favorite: boolean
   canEdit: boolean
   isAdmin: boolean
-  pinnedAt: Date | null
 }
 
 /** For datetime-local, in Taipei time. */
@@ -51,36 +48,10 @@ function fail(result: { error?: string }) {
 export function PhotoActions({ photo }: { photo: Photo }) {
   const router = useRouter()
   const [dialog, setDialog] = React.useState<"edit" | "delete" | null>(null)
-  const [liked, setLiked] = React.useOptimistic(photo.favorite)
-  const [, startTransition] = React.useTransition()
   const close = (open: boolean) => !open && setDialog(null)
 
   return (
     <div className="flex shrink-0 gap-2">
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              variant="outline"
-              size="icon"
-              aria-pressed={liked}
-              onClick={() =>
-                startTransition(async () => {
-                  setLiked(!liked)
-                  const result = await favorite({
-                    photoId: photo.id,
-                    favorite: !liked,
-                  })
-                  if (result.error) toast.error(result.error)
-                })
-              }
-            />
-          }
-        >
-          <HeartIcon className={cn(liked && "fill-current text-destructive")} />
-        </TooltipTrigger>
-        <TooltipContent>{liked ? "取消收藏" : "收藏"}</TooltipContent>
-      </Tooltip>
       <Tooltip>
         <TooltipTrigger
           render={
@@ -105,19 +76,6 @@ export function PhotoActions({ photo }: { photo: Photo }) {
             {photo.canEdit && (
               <DropdownMenuItem onClick={() => setDialog("edit")}>
                 編輯
-              </DropdownMenuItem>
-            )}
-            {photo.isAdmin && (
-              <DropdownMenuItem
-                onClick={async () => {
-                  const result = await pin({
-                    id: photo.id,
-                    pinned: !photo.pinnedAt,
-                  })
-                  if (result.error) toast.error(result.error)
-                }}
-              >
-                {photo.pinnedAt ? "取消置頂" : "置頂"}
               </DropdownMenuItem>
             )}
             {photo.canEdit && (
