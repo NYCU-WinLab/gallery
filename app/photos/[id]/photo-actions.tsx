@@ -21,13 +21,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
-import { removePhoto, savePhoto, saveTags } from "../../actions"
+import { removePhoto, savePhoto } from "../../actions"
 
 type Photo = {
   id: string
   name: string
   takenAt: Date
-  tags: string[]
   canEdit: boolean
   isAdmin: boolean
 }
@@ -103,11 +102,6 @@ export function PhotoActions({ photo }: { photo: Photo }) {
               ...(takenAt && { takenAt: `${takenAt}:00+08:00` }),
             })
           )
-          const names = String(data.get("tags") ?? "")
-            .split(/[,，、\s]+/)
-            .map((name) => name.replace(/^#/, "").trim())
-            .filter(Boolean)
-          fail(await saveTags({ photoId: photo.id, names }))
           toast.success("已儲存")
         }}
       >
@@ -120,9 +114,6 @@ export function PhotoActions({ photo }: { photo: Photo }) {
             type="datetime-local"
             defaultValue={localValue(photo.takenAt)}
           />
-        </FormField>
-        <FormField label="標籤（逗號或空白分隔）">
-          <Input name="tags" defaultValue={photo.tags.join(", ")} />
         </FormField>
       </FormDialog>
       <ConfirmDialog

@@ -32,7 +32,6 @@ export async function GalleryShell({
       nav={[
         { label: "照片", href: "/", tip: "" },
         { label: "人物", href: "/people", tip: "" },
-        { label: "標籤", href: "/tags", tip: "" },
       ]}
       actions={<GalleryCorners />}
       corners={{

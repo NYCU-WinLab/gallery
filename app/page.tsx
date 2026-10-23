@@ -12,12 +12,11 @@ import { PhotoWall } from "./photo-wall"
 export const dynamic = "force-dynamic"
 
 type Search = {
-  tag?: string
   mine?: string
   person?: string
 }
 
-// The wall and nothing above it. A tag or a person on a photo page, or
+// The wall and nothing above it. A person on a photo page, or
 // 我上傳的 on the profile, open it filtered; then one line says so.
 export default async function Wall({ searchParams }: PageProps<"/">) {
   const search = (await searchParams) as Search
@@ -26,7 +25,6 @@ export default async function Wall({ searchParams }: PageProps<"/">) {
     search.person = undefined
   const actor = await requireActor("/")
   const filters = {
-    tag: search.tag || undefined,
     uploaderId: search.mine ? actor.userId : undefined,
     memberId: search.person || undefined,
   }
@@ -35,13 +33,11 @@ export default async function Wall({ searchParams }: PageProps<"/">) {
     search.person ? runAction(listPeople, actor, {}) : [],
   ])
   const person = people.find((p) => p.memberId === search.person)
-  const filter = search.tag
-    ? `#${search.tag}`
-    : search.person
-      ? (person?.name ?? "人物")
-      : search.mine
-        ? "我上傳的"
-        : null
+  const filter = search.person
+    ? (person?.name ?? "人物")
+    : search.mine
+      ? "我上傳的"
+      : null
 
   return (
     <GalleryShell layout="wide">

@@ -1,12 +1,9 @@
-import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { GalleryShell } from "@/components/gallery-shell"
-import { buttonVariants } from "@/components/ui/button"
 import { runAction } from "@/lib/actions/define"
 import { getPhoto } from "@/lib/actions/photos"
 import { requireActor } from "@/lib/auth/session"
-import { cn } from "@/lib/utils"
 
 import { People } from "./people"
 import { PhotoActions } from "./photo-actions"
@@ -54,22 +51,6 @@ export default async function PhotoPage({ params }: PageProps<"/photos/[id]">) {
           </div>
           {photo.people.length > 0 && (
             <People people={photo.people} isAdmin={photo.isAdmin} />
-          )}
-          {photo.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {photo.tags.map((tag) => (
-                <Link
-                  key={tag}
-                  href={`/?tag=${encodeURIComponent(tag)}`}
-                  className={cn(
-                    buttonVariants({ variant: "outline" }),
-                    "rounded-full"
-                  )}
-                >
-                  #{tag}
-                </Link>
-              ))}
-            </div>
           )}
           <Reactions
             photoId={photo.id}

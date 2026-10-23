@@ -36,6 +36,13 @@
       "when": 1792765960813,
       "tag": "0004_drop_favorites_comments_pins",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792768709935,
+      "tag": "0005_drop_tags",
+      "breakpoints": true
     }
   ]
 }
