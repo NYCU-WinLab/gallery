@@ -33,24 +33,29 @@ model = SentenceTransformer(
     model_kwargs={"dtype": torch.float32},
     config_kwargs={"audio_config": None},
 )
-lock = threading.Lock()
+# Searches must not wait behind a photo: on a CPU without AVX one image
+# takes over 30 seconds. Text and images queue separately and may run at
+# once (inference only reads the weights).
+text_lock = threading.Lock()
+image_lock = threading.Lock()
 
 
 def encode(kind, items):
     vectors = []
-    with lock:
-        for item in items:
-            if "image_b64" in item:
-                image = Image.open(io.BytesIO(base64.b64decode(item["image_b64"])))
-                image = image.convert("RGB")
-                image.thumbnail((MAX_SIDE, MAX_SIDE))
-                source = {"image": image}
-            else:
-                source = (QUERY if kind == "query" else DOCUMENT) + item["text"]
+    for item in items:
+        if "image_b64" in item:
+            image = Image.open(io.BytesIO(base64.b64decode(item["image_b64"])))
+            image = image.convert("RGB")
+            image.thumbnail((MAX_SIDE, MAX_SIDE))
+            source, lock = {"image": image}, image_lock
+        else:
+            source = (QUERY if kind == "query" else DOCUMENT) + item["text"]
+            lock = text_lock
+        with lock, torch.inference_mode():
             vector = model.encode(
                 source, prompt="", normalize_embeddings=True, show_progress_bar=False
             )
-            vectors.append([round(float(x), 6) for x in vector])
+        vectors.append([round(float(x), 6) for x in vector])
     return vectors
 
 
