@@ -47,7 +47,30 @@ services:
       interval: 10s
       retries: 10
 
+  # Search by meaning (EmbeddingGemma 2 on CPU, about 3 GB of memory).
+  # Starts with COMPOSE_PROFILES=search; set EMBED_URL=http://embed:8000 to
+  # use it. Without it, search matches names only.
+  embed:
+    image: ghcr.io/nycu-winlab/gallery-embed:${GALLERY_VERSION:-main}
+    profiles: [search]
+    restart: unless-stopped
+    environment:
+      EMBED_THREADS: ${EMBED_THREADS:-2}
+    volumes:
+      - models:/models
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8000/')
+      interval: 10s
+      start_period: 600s
+      retries: 10
+
 volumes:
   postgres:
   # thumb and large, copied from Nextcloud on first view; safe to delete.
   cache:
+  # The embedding model, downloaded on first start.
+  models:

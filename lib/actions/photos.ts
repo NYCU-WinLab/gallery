@@ -35,6 +35,7 @@ import {
   uploadDir,
 } from "@/lib/media"
 import { deletePhotoFiles, putPhotoFiles } from "@/lib/nextcloud"
+import { searchByMeaning } from "@/lib/actions/vectors"
 
 const PAGE = 48
 
@@ -74,20 +75,31 @@ const wallInput = z.object({
 export const listPhotos = defineAction({
   name: "list_photos",
   title: "照片牆",
-  description: `The wall, newest taken first with pinned photos on top, ${PAGE} cards per page (pass offset for the next page; nextOffset is null at the end). A card is a photo, or the first photo of a sequence uploaded together (sequenceSize > 1; get_photo lists the rest). Filters: query (photo name, tag or uploader name), tag (exact tag name), uploaderId, favorites (only the caller's favorites).`,
+  description: `The wall, newest taken first with pinned photos on top, ${PAGE} cards per page (pass offset for the next page; nextOffset is null at the end). A card is a photo, or the first photo of a sequence uploaded together (sequenceSize > 1; get_photo lists the rest). Filters: query (photo name, tag or uploader name as text, and what photos show by meaning, e.g. \"birthday cake\"; best matches first), tag (exact tag name), uploaderId, favorites (only the caller's favorites).`,
   kind: "query",
   input: wallInput,
   run: async (actor, input) => {
     const filters: SQL[] = [isCover]
+    // A search matches names, tags and uploaders as text, and photos by
+    // meaning; text matches come first, then the closest in meaning.
+    let ranking: SQL[] = []
     if (input.query) {
       const like = `%${input.query.replace(/[%_\\]/g, "\\$&")}%`
-      filters.push(
-        or(
-          ilike(photos.name, like),
-          ilike(user.name, like),
-          sql`exists (select 1 from photo_tags pt join tags t on t.id = pt.tag_id where t.name ilike ${like} and pt.photo_id in (select s.id from photos s where s.id = ${photos.id} or (${photos.sequenceId} is not null and s.sequence_id = ${photos.sequenceId})))`
-        )!
-      )
+      const text = or(
+        ilike(photos.name, like),
+        ilike(user.name, like),
+        sql`exists (select 1 from photo_tags pt join tags t on t.id = pt.tag_id where t.name ilike ${like} and pt.photo_id in (select s.id from photos s where s.id = ${photos.id} or (${photos.sequenceId} is not null and s.sequence_id = ${photos.sequenceId})))`
+      )!
+      const meaning = await searchByMeaning(input.query)
+      if (meaning?.length) {
+        const cards = sql`${`{${meaning.join(",")}}`}::uuid[]`
+        const cardId = sql`coalesce(${photos.sequenceId}, ${photos.id})`
+        filters.push(or(text, sql`${cardId} = any(${cards})`)!)
+        ranking = [
+          sql`(${text}) desc`,
+          sql`array_position(${cards}, ${cardId}) nulls last`,
+        ]
+      } else filters.push(text)
     }
     if (input.tag)
       filters.push(
@@ -109,6 +121,7 @@ export const listPhotos = defineAction({
       .leftJoin(user, eq(user.id, photos.uploaderId))
       .where(and(...filters))
       .orderBy(
+        ...ranking,
         sql`${photos.pinnedAt} desc nulls last`,
         desc(photos.takenAt),
         desc(photos.id)

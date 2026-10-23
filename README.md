@@ -26,6 +26,7 @@ WinLab members share lab photos here: upload from a phone, react, comment and ta
 ## What it does
 
 - **Shows the wall**: newest taken first, pinned on top, photos uploaded together as one card, filtered by search, tag, uploader or favorites.
+- **Searches by meaning**: "生日蛋糕" finds the cake photos even when nobody named or tagged them, through EmbeddingGemma 2 vectors of each photo (optional; off, search matches text only).
 - **Takes uploads**: photos up to 30 MB (HEIC turns into JPEG) and videos up to 60 seconds and 100 MB (re-encoded to 720p H.264).
 - **Stores files in Nextcloud** under one folder of one account, with a 480 px and a 2048 px WebP made at upload.
 - **Lets members react, comment and tag**: 8 reactions, two-level comments, tags and favorites.
@@ -76,6 +77,7 @@ Set these in `.env`; [.env.example](.env.example) documents every one.
 | `NEXTCLOUD_ROOT` | The folder in that account the gallery owns | `gallery` |
 | `GALLERY_VERSION` | Image tag | `main` |
 | `GALLERY_BIND`, `GALLERY_PORT` | Where web listens on the host | `127.0.0.1`, `3000` |
+| `COMPOSE_PROFILES`, `EMBED_URL` | `search` and `http://embed:8000` turn on search by meaning (about 3 GB of memory) | empty |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP/HTTP endpoint for traces and error logs; off when empty | empty |
 
 ## How it works
@@ -109,6 +111,7 @@ Uploads need `ffmpeg` and `ffprobe` on the PATH. CI runs typecheck, lint, format
 ## Limitations
 
 - One web container: the media cache and upload temp files are on its own disk.
+- Search by meaning scores every photo per search and embeds on CPU (about 5 seconds a photo on 2 cores), which suits a lab's few thousand photos, not a large archive.
 - Video re-encoding runs inside the upload request, so a 60 second clip takes a while on a small machine.
 - No notifications: an @mention is plain text.
 
