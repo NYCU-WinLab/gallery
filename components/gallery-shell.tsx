@@ -8,9 +8,9 @@ import { GalleryCorners } from "@/components/gallery-corners"
 import { LiveRefresh } from "@/components/live-refresh"
 import { getSession } from "@/lib/auth/session"
 
-// The gallery's corners: the lab and the page in the breadcrumb, search and
-// upload in the top right (both open over the page), the member's account
-// next to the build in the bottom left.
+// The gallery's corners: the lab and the page in the breadcrumb, the pages
+// then search and upload in the top right (both open over the page), the
+// member's account next to the build in the bottom left.
 export async function GalleryShell({
   page,
   layout,
@@ -29,8 +29,13 @@ export async function GalleryShell({
         { label: "Gallery", href: "/", tip: "" },
         ...(page ? [page] : []),
       ]}
+      nav={[
+        { label: "照片", href: "/", tip: "" },
+        { label: "人物", href: "/people", tip: "" },
+        { label: "標籤", href: "/tags", tip: "" },
+      ]}
+      actions={<GalleryCorners />}
       corners={{
-        topRight: <GalleryCorners />,
         bottomLeft: (
           <>
             {session && (

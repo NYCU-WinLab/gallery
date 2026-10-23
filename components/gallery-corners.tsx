@@ -16,8 +16,8 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 
-// The gallery's top right: search and upload, each over the page instead of
-// a page of its own. Search also opens with / or Cmd+K.
+// The gallery's actions, after the page tabs in the top right: search and
+// upload, each over the page instead of a page of its own. Search also opens with / or Cmd+K.
 export function GalleryCorners() {
   const [open, setOpen] = React.useState<"search" | "upload" | null>(null)
 
@@ -41,6 +41,8 @@ export function GalleryCorners() {
   const close = (next: boolean) => !next && setOpen(null)
   return (
     <>
+      {/* Sets the actions apart from the page tabs before them. */}
+      <span aria-hidden className="hidden h-4 w-px bg-border md:block" />
       <nav aria-label="動作" className="flex items-center gap-4">
         <button
           type="button"
