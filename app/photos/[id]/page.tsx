@@ -11,6 +11,7 @@ import { requireActor } from "@/lib/auth/session"
 import { cn } from "@/lib/utils"
 
 import { Comments } from "./comments"
+import { People } from "./people"
 import { PhotoActions } from "./photo-actions"
 import { Reactions } from "./reactions"
 import { Viewer } from "./viewer"
@@ -57,6 +58,9 @@ export default async function PhotoPage({ params }: PageProps<"/photos/[id]">) {
             </div>
             <PhotoActions photo={photo} />
           </div>
+          {photo.people.length > 0 && (
+            <People people={photo.people} isAdmin={photo.isAdmin} />
+          )}
           {photo.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {photo.tags.map((tag) => (

@@ -3,6 +3,7 @@ import Link from "next/link"
 import { EmptyState } from "@/components/empty-state"
 import { GalleryShell } from "@/components/gallery-shell"
 import { runAction } from "@/lib/actions/define"
+import { listPeople } from "@/lib/actions/faces"
 import { listPhotos } from "@/lib/actions/photos"
 import { requireActor } from "@/lib/auth/session"
 
@@ -10,26 +11,38 @@ import { PhotoWall } from "./photo-wall"
 
 export const dynamic = "force-dynamic"
 
-type Search = { tag?: string; mine?: string; favorites?: string }
+type Search = {
+  tag?: string
+  mine?: string
+  favorites?: string
+  person?: string
+}
 
-// The wall and nothing above it. A tag on a photo page, or 我上傳的 and
-// 收藏 on the profile, open it filtered; then one line says so.
+// The wall and nothing above it. A tag or a person on a photo page, or
+// 我上傳的 and 收藏 on the profile, open it filtered; then one line says so.
 export default async function Wall({ searchParams }: PageProps<"/">) {
   const search = (await searchParams) as Search
   const actor = await requireActor("/")
   const filters = {
     tag: search.tag || undefined,
     uploaderId: search.mine ? actor.userId : undefined,
+    memberId: search.person || undefined,
     favorites: search.favorites ? true : undefined,
   }
-  const { photos, nextOffset } = await runAction(listPhotos, actor, filters)
+  const [{ photos, nextOffset }, people] = await Promise.all([
+    runAction(listPhotos, actor, filters),
+    search.person ? runAction(listPeople, actor, {}) : [],
+  ])
+  const person = people.find((p) => p.memberId === search.person)
   const filter = search.tag
     ? `#${search.tag}`
-    : search.mine
-      ? "我上傳的"
-      : search.favorites
-        ? "收藏"
-        : null
+    : search.person
+      ? (person?.name ?? "人物")
+      : search.mine
+        ? "我上傳的"
+        : search.favorites
+          ? "收藏"
+          : null
 
   return (
     <GalleryShell layout="wide">

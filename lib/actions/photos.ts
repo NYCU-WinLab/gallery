@@ -19,6 +19,7 @@ import { isAdmin, requireAdmin } from "@/lib/actions/authz"
 import { defineAction, type Actor } from "@/lib/actions/define"
 import { db } from "@/lib/db"
 import {
+  faces,
   favorites,
   photoReactions,
   photos,
@@ -68,6 +69,7 @@ const wallInput = z.object({
   query: z.string().trim().max(100).optional(),
   tag: z.string().trim().max(50).optional(),
   uploaderId: z.uuid().optional(),
+  memberId: z.uuid().optional(),
   favorites: z.boolean().optional(),
   offset: z.number().int().min(0).default(0),
 })
@@ -75,7 +77,7 @@ const wallInput = z.object({
 export const listPhotos = defineAction({
   name: "list_photos",
   title: "照片牆",
-  description: `The wall, newest taken first with pinned photos on top, ${PAGE} cards per page (pass offset for the next page; nextOffset is null at the end). A card is a photo, or the first photo of a sequence uploaded together (sequenceSize > 1; get_photo lists the rest). Filters: query (photo name, tag or uploader name as text, and what photos show by meaning, e.g. \"birthday cake\"; best matches first), tag (exact tag name), uploaderId, favorites (only the caller's favorites).`,
+  description: `The wall, newest taken first with pinned photos on top, ${PAGE} cards per page (pass offset for the next page; nextOffset is null at the end). A card is a photo, or the first photo of a sequence uploaded together (sequenceSize > 1; get_photo lists the rest). Filters: query (photo name, tag or uploader name as text, and what photos show by meaning, e.g. \"birthday cake\"; best matches first), tag (exact tag name), uploaderId, memberId (photos that show this member, from list_people), favorites (only the caller's favorites).`,
   kind: "query",
   input: wallInput,
   run: async (actor, input) => {
@@ -106,6 +108,10 @@ export const listPhotos = defineAction({
         sql`exists (select 1 from photo_tags pt join tags t on t.id = pt.tag_id where t.name = ${input.tag} and pt.photo_id in (select s.id from photos s where s.id = ${photos.id} or (${photos.sequenceId} is not null and s.sequence_id = ${photos.sequenceId})))`
       )
     if (input.uploaderId) filters.push(eq(photos.uploaderId, input.uploaderId))
+    if (input.memberId)
+      filters.push(
+        sql`exists (select 1 from faces f where f.member_id = ${input.memberId} and f.photo_id in (select s.id from photos s where s.id = ${photos.id} or (${photos.sequenceId} is not null and s.sequence_id = ${photos.sequenceId})))`
+      )
     if (input.favorites)
       filters.push(
         sql`exists (select 1 from favorites f where f.user_id = ${actor.userId} and f.photo_id in (select s.id from photos s where s.id = ${photos.id} or (${photos.sequenceId} is not null and s.sequence_id = ${photos.sequenceId})))`
@@ -139,7 +145,7 @@ export const getPhoto = defineAction({
   name: "get_photo",
   title: "照片",
   description:
-    "One photo with everything around it: uploader, the other photos of its sequence, tags, reaction counts and the caller's own reaction, whether the caller favorited it, and whether the caller may edit it. Comments come from list_comments.",
+    "One photo with everything around it: uploader, the other photos of its sequence, tags, the members it shows (people, with their faces in it), reaction counts and the caller's own reaction, whether the caller favorited it, and whether the caller may edit it. Comments come from list_comments.",
   kind: "query",
   input: z.object({ id: z.uuid() }),
   run: async (actor, { id }) => {
@@ -155,7 +161,7 @@ export const getPhoto = defineAction({
       .leftJoin(user, eq(user.id, photos.uploaderId))
       .where(eq(photos.id, id))
     if (!photo) throw new Error("找不到這張照片")
-    const [sequence, photoTagRows, reactionRows, favorite, admin] =
+    const [sequence, photoTagRows, people, reactionRows, favorite, admin] =
       await Promise.all([
         photo.sequenceId
           ? db
@@ -184,6 +190,18 @@ export const getPhoto = defineAction({
           .orderBy(asc(tags.name)),
         db
           .select({
+            memberId: user.id,
+            name: user.name,
+            faceIds: sql<
+              string[]
+            >`array_agg(${faces.id} order by ${faces.score} desc)`,
+          })
+          .from(faces)
+          .innerJoin(user, eq(user.id, faces.memberId))
+          .where(eq(faces.photoId, id))
+          .groupBy(user.id, user.name),
+        db
+          .select({
             reaction: photoReactions.reaction,
             userId: photoReactions.userId,
             name: user.name,
@@ -204,6 +222,7 @@ export const getPhoto = defineAction({
       ...photo,
       sequence,
       tags: photoTagRows.map((row) => row.name),
+      people: people.sort((a, b) => a.name.localeCompare(b.name, "zh-TW")),
       reactions: reactionRows,
       myReaction:
         reactionRows.find((row) => row.userId === actor.userId)?.reaction ??

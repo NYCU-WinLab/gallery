@@ -14,6 +14,7 @@ export const dynamic = "force-dynamic"
 const links = [
   { label: "我上傳的", href: "/?mine=1" },
   { label: "我的收藏", href: "/?favorites=1" },
+  { label: "人物", href: "/people" },
   { label: "標籤", href: "/tags" },
   { label: "管理員", href: "/admins" },
 ]
