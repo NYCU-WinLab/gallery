@@ -102,7 +102,7 @@ export async function labMembers(): Promise<LabMember[]> {
   if (labCache && Date.now() - labCache.at < LAB_MEMBERS_TTL_MS)
     return labCache.members
   if (Date.now() - labFailedAt < LAB_RETRY_MS)
-    throw new Error("Keycloak lab members unavailable")
+    throw new Error("Keycloak 暫時連不上，稍後再試")
   try {
     labCache = { members: await fetchLabMembers(), at: Date.now() }
   } catch (error) {
