@@ -29,7 +29,7 @@ export const listAdmins = defineAction({
   name: "list_admins",
   title: "管理員名單",
   description:
-    "Gallery admins: they pin photos and comments, run the tags, and edit or delete any photo or album.",
+    "Gallery admins: they pin photos and comments, run the tags, and edit or delete any photo.",
   kind: "query",
   input: z.object({}),
   run: async () =>

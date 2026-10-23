@@ -105,7 +105,7 @@ export function UploadForm() {
 
   const busy = progress !== null
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex w-full flex-col items-center gap-6">
       <FileUpload
         value={files}
         onValueChange={change}
@@ -115,9 +115,10 @@ export function UploadForm() {
         multiple
         paste
         disabled={busy}
+        className="w-full"
       />
       {files.length > 0 && (
-        <ul className="flex flex-col">
+        <ul className="flex w-full flex-col">
           {files.map((file, i) => (
             <li
               key={`${file.name}-${i}`}
@@ -151,7 +152,7 @@ export function UploadForm() {
           在照片牆上合成一張卡
         </Label>
       )}
-      <div className="flex items-center justify-end gap-4">
+      <div className="flex flex-col items-center gap-2">
         {progress && (
           <span className="text-muted-foreground tabular-nums">{progress}</span>
         )}

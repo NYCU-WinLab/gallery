@@ -4,7 +4,6 @@ import { notFound } from "next/navigation"
 import { GalleryShell } from "@/components/gallery-shell"
 import { SectionHeader } from "@/components/page-header"
 import { buttonVariants } from "@/components/ui/button"
-import { listAlbums } from "@/lib/actions/albums"
 import { listComments } from "@/lib/actions/comments"
 import { runAction } from "@/lib/actions/define"
 import { getPhoto } from "@/lib/actions/photos"
@@ -34,18 +33,14 @@ export default async function PhotoPage({ params }: PageProps<"/photos/[id]">) {
   const actor = await requireActor(`/photos/${id}`)
   const photo = await runAction(getPhoto, actor, { id }).catch(() => null)
   if (!photo) notFound()
-  const [{ comments, isAdmin }, albums] = await Promise.all([
-    runAction(listComments, actor, { photoId: id }),
-    runAction(listAlbums, actor, {}),
-  ])
-  const myAlbums = albums
-    .filter((album) => photo.isAdmin || album.createdBy === actor.userId)
-    .map(({ id, title }) => ({ id, title }))
+  const { comments, isAdmin } = await runAction(listComments, actor, {
+    photoId: id,
+  })
 
   return (
     <GalleryShell
       layout="wide"
-      page={{ label: photo.name, href: `/photos/${id}`, tip: "照片" }}
+      page={{ label: photo.name, href: `/photos/${id}`, tip: "" }}
     >
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
         <Viewer photo={photo} />
@@ -60,9 +55,9 @@ export default async function PhotoPage({ params }: PageProps<"/photos/[id]">) {
                 {dateTime.format(photo.takenAt)}
               </p>
             </div>
-            <PhotoActions photo={photo} albums={myAlbums} />
+            <PhotoActions photo={photo} />
           </div>
-          {(photo.tags.length > 0 || photo.albums.length > 0) && (
+          {photo.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {photo.tags.map((tag) => (
                 <Link
@@ -74,18 +69,6 @@ export default async function PhotoPage({ params }: PageProps<"/photos/[id]">) {
                   )}
                 >
                   #{tag}
-                </Link>
-              ))}
-              {photo.albums.map((album) => (
-                <Link
-                  key={album.slug}
-                  href={`/albums/${album.slug}`}
-                  className={cn(
-                    buttonVariants({ variant: "ghost" }),
-                    "rounded-full"
-                  )}
-                >
-                  {album.title}
                 </Link>
               ))}
             </div>

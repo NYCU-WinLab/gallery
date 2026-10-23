@@ -19,9 +19,7 @@ export default async function TagsPage() {
     isAdmin(actor),
   ])
   return (
-    <GalleryShell
-      page={{ label: "標籤", href: "/tags", tip: "所有標籤與張數" }}
-    >
+    <GalleryShell page={{ label: "標籤", href: "/tags", tip: "" }}>
       <div className="flex flex-col gap-8">
         <PageHeader title="標籤" />
         {tags.length === 0 && <EmptyState noun="標籤" />}

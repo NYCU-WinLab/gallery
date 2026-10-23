@@ -3,7 +3,6 @@ import Link from "next/link"
 import { EmptyState } from "@/components/empty-state"
 import { GalleryShell } from "@/components/gallery-shell"
 import { PageHeader } from "@/components/page-header"
-import { PhotoCard, PhotoGrid } from "@/components/photo-grid"
 import { buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { runAction } from "@/lib/actions/define"
@@ -12,7 +11,7 @@ import { listTags } from "@/lib/actions/tags"
 import { requireActor } from "@/lib/auth/session"
 import { cn } from "@/lib/utils"
 
-import { MorePhotos } from "./more-photos"
+import { PhotoWall } from "./photo-wall"
 
 export const dynamic = "force-dynamic"
 
@@ -106,16 +105,12 @@ export default async function Wall({ searchParams }: PageProps<"/">) {
             }
           />
         ) : (
-          <PhotoGrid>
-            {photos.map((photo) => (
-              <PhotoCard key={photo.id} photo={photo} />
-            ))}
-            <MorePhotos
-              key={JSON.stringify(filters)}
-              filters={filters}
-              offset={nextOffset}
-            />
-          </PhotoGrid>
+          <PhotoWall
+            key={JSON.stringify(filters)}
+            photos={photos}
+            filters={filters}
+            offset={nextOffset}
+          />
         )}
       </div>
     </GalleryShell>

@@ -23,7 +23,7 @@ export default async function AdminsPage() {
       page={{
         label: "管理員",
         href: "/admins",
-        tip: "置頂、管標籤、改任何照片",
+        tip: "",
       }}
     >
       <div className="flex flex-col gap-8">
