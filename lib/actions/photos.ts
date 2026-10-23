@@ -15,12 +15,11 @@ import {
 } from "drizzle-orm"
 import { z } from "zod"
 
-import { isAdmin, requireAdmin } from "@/lib/actions/authz"
+import { isAdmin } from "@/lib/actions/authz"
 import { defineAction, type Actor } from "@/lib/actions/define"
 import { db } from "@/lib/db"
 import {
   faces,
-  favorites,
   photoReactions,
   photos,
   photoTags,
@@ -50,7 +49,6 @@ const card = {
   durationSeconds: photos.durationSeconds,
   sequenceId: photos.sequenceId,
   takenAt: photos.takenAt,
-  pinnedAt: photos.pinnedAt,
   uploaderId: photos.uploaderId,
   uploaderName: user.name,
 }
@@ -63,21 +61,19 @@ const isCover = or(
   sql`${photos.sequenceIndex} = (select min(s.sequence_index) from ${photos} s where s.sequence_id = ${photos.sequenceId})`
 )!
 const reactionCount = sql<number>`(select count(*)::int from photo_reactions r where r.photo_id = ${photos.id})`
-const commentCount = sql<number>`(select count(*)::int from comments c where c.photo_id = ${photos.id})`
 
 const wallInput = z.object({
   query: z.string().trim().max(100).optional(),
   tag: z.string().trim().max(50).optional(),
   uploaderId: z.uuid().optional(),
   memberId: z.uuid().optional(),
-  favorites: z.boolean().optional(),
   offset: z.number().int().min(0).default(0),
 })
 
 export const listPhotos = defineAction({
   name: "list_photos",
   title: "照片牆",
-  description: `The wall, newest taken first with pinned photos on top, ${PAGE} cards per page (pass offset for the next page; nextOffset is null at the end). A card is a photo, or the first photo of a sequence uploaded together (sequenceSize > 1; get_photo lists the rest). Filters: query (photo name, tag or uploader name as text, and what photos show by meaning, e.g. \"birthday cake\"; best matches first), tag (exact tag name), uploaderId, memberId (photos that show this member, from list_people), favorites (only the caller's favorites).`,
+  description: `The wall, newest taken first, ${PAGE} cards per page (pass offset for the next page; nextOffset is null at the end). A card is a photo, or the first photo of a sequence uploaded together (sequenceSize > 1; get_photo lists the rest). Filters: query (photo name, tag or uploader name as text, and what photos show by meaning, e.g. \"birthday cake\"; best matches first), tag (exact tag name), uploaderId, memberId (photos that show this member, from list_people).`,
   kind: "query",
   input: wallInput,
   run: async (actor, input) => {
@@ -112,26 +108,16 @@ export const listPhotos = defineAction({
       filters.push(
         sql`exists (select 1 from faces f where f.member_id = ${input.memberId} and f.photo_id in (select s.id from photos s where s.id = ${photos.id} or (${photos.sequenceId} is not null and s.sequence_id = ${photos.sequenceId})))`
       )
-    if (input.favorites)
-      filters.push(
-        sql`exists (select 1 from favorites f where f.user_id = ${actor.userId} and f.photo_id in (select s.id from photos s where s.id = ${photos.id} or (${photos.sequenceId} is not null and s.sequence_id = ${photos.sequenceId})))`
-      )
     const rows = await db
       .select({
         ...card,
         sequenceSize,
         reactionCount,
-        commentCount,
       })
       .from(photos)
       .leftJoin(user, eq(user.id, photos.uploaderId))
       .where(and(...filters))
-      .orderBy(
-        ...ranking,
-        sql`${photos.pinnedAt} desc nulls last`,
-        desc(photos.takenAt),
-        desc(photos.id)
-      )
+      .orderBy(...ranking, desc(photos.takenAt), desc(photos.id))
       .limit(PAGE + 1)
       .offset(input.offset)
     return {
@@ -145,7 +131,7 @@ export const getPhoto = defineAction({
   name: "get_photo",
   title: "照片",
   description:
-    "One photo with everything around it: uploader, the other photos of its sequence, tags, the members it shows (people, with their faces in it), reaction counts and the caller's own reaction, whether the caller favorited it, and whether the caller may edit it. Comments come from list_comments.",
+    "One photo with everything around it: uploader, the other photos of its sequence, tags, the members it shows (people, with their faces in it), reaction counts and the caller's own reaction, and whether the caller may edit it.",
   kind: "query",
   input: z.object({ id: z.uuid() }),
   run: async (actor, { id }) => {
@@ -161,7 +147,7 @@ export const getPhoto = defineAction({
       .leftJoin(user, eq(user.id, photos.uploaderId))
       .where(eq(photos.id, id))
     if (!photo) throw new Error("找不到這張照片")
-    const [sequence, photoTagRows, people, reactionRows, favorite, admin] =
+    const [sequence, photoTagRows, people, reactionRows, admin] =
       await Promise.all([
         photo.sequenceId
           ? db
@@ -210,12 +196,6 @@ export const getPhoto = defineAction({
           .innerJoin(user, eq(user.id, photoReactions.userId))
           .where(eq(photoReactions.photoId, id))
           .orderBy(asc(photoReactions.createdAt)),
-        db
-          .select({ photoId: favorites.photoId })
-          .from(favorites)
-          .where(
-            and(eq(favorites.photoId, id), eq(favorites.userId, actor.userId))
-          ),
         isAdmin(actor),
       ])
     return {
@@ -227,7 +207,6 @@ export const getPhoto = defineAction({
       myReaction:
         reactionRows.find((row) => row.userId === actor.userId)?.reaction ??
         null,
-      favorite: favorite.length > 0,
       canEdit: admin || photo.uploaderId === actor.userId,
       isAdmin: admin,
     }
@@ -344,7 +323,7 @@ export const deletePhoto = defineAction({
   name: "delete_photo",
   title: "刪除照片",
   description:
-    "Deletes a photo with its files, reactions, comments and tags. Only the uploader or a gallery admin. Cannot be undone.",
+    "Deletes a photo with its files, reactions, faces and tags. Only the uploader or a gallery admin. Cannot be undone.",
   kind: "mutation",
   input: z.object({ id: z.uuid() }),
   run: async (actor, { id }) => {
@@ -354,23 +333,6 @@ export const deletePhoto = defineAction({
     // without files shows a broken card.
     await deletePhotoFiles(id).catch(() => {})
     return { id }
-  },
-})
-
-export const pinPhoto = defineAction({
-  name: "pin_photo",
-  title: "置頂照片",
-  description:
-    "Pins a photo to the top of the wall, or unpins it. Gallery admins only.",
-  kind: "mutation",
-  input: z.object({ id: z.uuid(), pinned: z.boolean() }),
-  run: async (actor, { id, pinned }) => {
-    await requireAdmin(actor)
-    await db
-      .update(photos)
-      .set({ pinnedAt: pinned ? new Date() : null })
-      .where(eq(photos.id, id))
-    return { id, pinned }
   },
 })
 
@@ -405,31 +367,6 @@ export const setReaction = defineAction({
           set: { reaction, createdAt: new Date() },
         })
     return { photoId, reaction }
-  },
-})
-
-export const setFavorite = defineAction({
-  name: "set_favorite",
-  title: "收藏照片",
-  description: "Adds a photo to the caller's favorites, or removes it.",
-  kind: "mutation",
-  input: z.object({ photoId: z.uuid(), favorite: z.boolean() }),
-  run: async (actor, { photoId, favorite }) => {
-    if (favorite)
-      await db
-        .insert(favorites)
-        .values({ photoId, userId: actor.userId })
-        .onConflictDoNothing()
-    else
-      await db
-        .delete(favorites)
-        .where(
-          and(
-            eq(favorites.photoId, photoId),
-            eq(favorites.userId, actor.userId)
-          )
-        )
-    return { photoId, favorite }
   },
 })
 

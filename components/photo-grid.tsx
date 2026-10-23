@@ -1,11 +1,5 @@
 import Link from "next/link"
-import {
-  CopyIcon,
-  HeartIcon,
-  MessageCircleIcon,
-  PinIcon,
-  PlayIcon,
-} from "lucide-react"
+import { CopyIcon, HeartIcon, PlayIcon } from "lucide-react"
 
 export type GridPhoto = {
   id: string
@@ -16,8 +10,6 @@ export type GridPhoto = {
   durationSeconds: number | null
   sequenceSize?: number
   reactionCount?: number
-  commentCount?: number
-  pinnedAt?: Date | null
 }
 
 /** 0:42 */
@@ -27,10 +19,10 @@ export function duration(seconds: number) {
 }
 
 // One card on a wall: the thumbnail at its own shape, with what the
-// thumbnail cannot show (a video, a set of photos, a pin) in the corner,
-// and reaction and comment counts under it.
+// thumbnail cannot show (a video, a set of photos) in the corner,
+// and the reaction count under it.
 export function PhotoCard({ photo }: { photo: GridPhoto }) {
-  const counts = (photo.reactionCount ?? 0) + (photo.commentCount ?? 0) > 0
+  const counts = (photo.reactionCount ?? 0) > 0
   return (
     <Link href={`/photos/${photo.id}`} className="group flex flex-col gap-2">
       <span className="relative block overflow-hidden rounded-control bg-muted">
@@ -45,11 +37,6 @@ export function PhotoCard({ photo }: { photo: GridPhoto }) {
           className="block h-auto w-full transition-opacity duration-state group-hover:opacity-90"
         />
         <span className="absolute top-2 right-2 flex gap-1">
-          {photo.pinnedAt && (
-            <Badge>
-              <PinIcon />
-            </Badge>
-          )}
           {photo.mediaType === "video" && (
             <Badge>
               <PlayIcon />
@@ -72,12 +59,6 @@ export function PhotoCard({ photo }: { photo: GridPhoto }) {
               <span className="flex items-center gap-1">
                 <HeartIcon className="size-4" />
                 {photo.reactionCount}
-              </span>
-            )}
-            {!!photo.commentCount && (
-              <span className="flex items-center gap-1">
-                <MessageCircleIcon className="size-4" />
-                {photo.commentCount}
               </span>
             )}
           </span>

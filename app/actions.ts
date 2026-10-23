@@ -5,17 +5,8 @@ import type { z } from "zod"
 import { type Action, errorMessage, runAction } from "@/lib/actions/define"
 import { grantAdmin, revokeAdmin } from "@/lib/actions/admins"
 import {
-  addComment,
-  deleteComment,
-  editComment,
-  likeComment,
-  pinComment,
-} from "@/lib/actions/comments"
-import {
   deletePhoto,
   listPhotos,
-  pinPhoto,
-  setFavorite,
   setReaction,
   updatePhoto,
 } from "@/lib/actions/photos"
@@ -43,18 +34,8 @@ async function call<Input extends z.ZodObject, Output>(
 export const loadPhotos = async (input: unknown) => call(listPhotos, input)
 export const savePhoto = async (input: unknown) => call(updatePhoto, input)
 export const removePhoto = async (input: unknown) => call(deletePhoto, input)
-export const pin = async (input: unknown) => call(pinPhoto, input)
 export const react = async (input: unknown) => call(setReaction, input)
-export const favorite = async (input: unknown) => call(setFavorite, input)
 export const saveTags = async (input: unknown) => call(setPhotoTags, input)
-
-export const comment = async (input: unknown) => call(addComment, input)
-export const saveComment = async (input: unknown) => call(editComment, input)
-export const removeComment = async (input: unknown) =>
-  call(deleteComment, input)
-export const pinCommentAction = async (input: unknown) =>
-  call(pinComment, input)
-export const like = async (input: unknown) => call(likeComment, input)
 
 export const saveTagName = async (input: unknown) => call(renameTag, input)
 export const removeTag = async (input: unknown) => call(deleteTag, input)

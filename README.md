@@ -15,7 +15,7 @@
 
 [![CI](https://github.com/NYCU-WinLab/gallery/actions/workflows/ci.yml/badge.svg)](https://github.com/NYCU-WinLab/gallery/actions) &nbsp;[![Image](https://img.shields.io/badge/image-ghcr.io%2Fnycu--winlab%2Fgallery-111111)](https://github.com/NYCU-WinLab/gallery/pkgs/container/gallery) &nbsp;[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](#license)
 
-WinLab members share lab photos here: upload from a phone, react, comment and tag. Only signed-in members see anything; every file passes through the app, which checks the session first.
+WinLab members share lab photos here: upload from a phone, react and tag. Only signed-in members see anything; every file passes through the app, which checks the session first.
 
 ```
 > "What did we post from last year's orientation?"
@@ -25,11 +25,11 @@ WinLab members share lab photos here: upload from a phone, react, comment and ta
 
 ## What it does
 
-- **Shows the wall**: newest taken first, pinned on top, photos uploaded together as one card, filtered by search, tag, uploader or favorites.
+- **Shows the wall**: newest taken first, photos uploaded together as one card, filtered by search, tag or uploader.
 - **Searches by meaning**: "生日蛋糕" finds the cake photos even when nobody named or tagged them, through EmbeddingGemma 2 vectors of each photo (optional; off, search matches text only).
 - **Takes uploads**: photos up to 30 MB (HEIC turns into JPEG) and videos up to 60 seconds and 100 MB (re-encoded to 720p H.264).
 - **Stores files in Nextcloud** under one folder of one account, with a 480 px and a 2048 px WebP made at upload.
-- **Lets members react, comment and tag**: 8 reactions, two-level comments, tags and favorites.
+- **Lets members react and tag**: 8 reactions and tags.
 - **Serves MCP** at `/mcp`, with the gallery as the OAuth 2.1 authorization server.
 
 ## Deploy
@@ -113,7 +113,6 @@ Uploads need `ffmpeg` and `ffprobe` on the PATH. CI runs typecheck, lint, format
 - One web container: the media cache and upload temp files are on its own disk.
 - Search by meaning scores every photo per search and embeds on CPU (about 5 seconds a photo on 2 cores), which suits a lab's few thousand photos, not a large archive.
 - Video re-encoding runs inside the upload request, so a 60 second clip takes a while on a small machine.
-- No notifications: an @mention is plain text.
 
 ## Contributing
 

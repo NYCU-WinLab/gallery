@@ -2,15 +2,12 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { GalleryShell } from "@/components/gallery-shell"
-import { SectionHeader } from "@/components/page-header"
 import { buttonVariants } from "@/components/ui/button"
-import { listComments } from "@/lib/actions/comments"
 import { runAction } from "@/lib/actions/define"
 import { getPhoto } from "@/lib/actions/photos"
 import { requireActor } from "@/lib/auth/session"
 import { cn } from "@/lib/utils"
 
-import { Comments } from "./comments"
 import { People } from "./people"
 import { PhotoActions } from "./photo-actions"
 import { Reactions } from "./reactions"
@@ -34,9 +31,6 @@ export default async function PhotoPage({ params }: PageProps<"/photos/[id]">) {
   const actor = await requireActor(`/photos/${id}`)
   const photo = await runAction(getPhoto, actor, { id }).catch(() => null)
   if (!photo) notFound()
-  const { comments, isAdmin } = await runAction(listComments, actor, {
-    photoId: id,
-  })
 
   return (
     <GalleryShell
@@ -83,10 +77,6 @@ export default async function PhotoPage({ params }: PageProps<"/photos/[id]">) {
             mine={photo.myReaction}
           />
         </div>
-        <section className="flex flex-col gap-4">
-          <SectionHeader title={`留言 ${comments.length || ""}`.trim()} />
-          <Comments photoId={photo.id} comments={comments} isAdmin={isAdmin} />
-        </section>
       </div>
     </GalleryShell>
   )
