@@ -19,6 +19,7 @@ import {
   setReaction,
   updatePhoto,
 } from "@/lib/actions/photos"
+import { labelFaces } from "@/lib/actions/faces"
 import { deleteTag, renameTag, setPhotoTags } from "@/lib/actions/tags"
 import { requireActor } from "@/lib/auth/session"
 
@@ -57,6 +58,8 @@ export const like = async (input: unknown) => call(likeComment, input)
 
 export const saveTagName = async (input: unknown) => call(renameTag, input)
 export const removeTag = async (input: unknown) => call(deleteTag, input)
+
+export const nameFaces = async (input: unknown) => call(labelFaces, input)
 
 export const grant = async (input: unknown) => call(grantAdmin, input)
 export const revoke = async (input: unknown) => call(revokeAdmin, input)

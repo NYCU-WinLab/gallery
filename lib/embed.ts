@@ -1,6 +1,7 @@
 // The embedding service (embed/, EmbeddingGemma 2): turns a photo or a
 // search into a 768-number vector, so a search finds photos by what they
-// show. Off when EMBED_URL is empty; search then matches names only.
+// show, and finds the faces in a photo. Off when EMBED_URL is empty; search
+// then matches names only, and no faces are found.
 
 export const embedEnabled = () => Boolean(process.env.EMBED_URL)
 
@@ -46,4 +47,30 @@ export async function embedPhoto(image: Uint8Array, name: string) {
 export async function embedName(name: string) {
   const [vector] = await embed("document", [{ text: name }], QUERY_TIMEOUT_MS)
   return vector
+}
+
+export type FoundFace = {
+  /** x1, y1, x2, y2 in pixels of the image sent. */
+  box: number[]
+  score: number
+  vector: number[]
+}
+
+/** The faces in one image, with the image's size for the boxes. */
+export async function findFaces(image: Uint8Array) {
+  const response = await fetch(`${process.env.EMBED_URL}/faces`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ image_b64: Buffer.from(image).toString("base64") }),
+    signal: AbortSignal.timeout(PHOTO_TIMEOUT_MS),
+  })
+  const body = (await response.json()) as {
+    width?: number
+    height?: number
+    faces?: FoundFace[]
+    error?: string
+  }
+  if (!response.ok || !body.faces || !body.width || !body.height)
+    throw new Error(`faces: ${body.error ?? response.status}`)
+  return { width: body.width, height: body.height, faces: body.faces }
 }

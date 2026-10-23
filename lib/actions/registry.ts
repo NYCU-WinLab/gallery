@@ -14,6 +14,12 @@ import {
 } from "@/lib/actions/comments"
 import type { Action } from "@/lib/actions/define"
 import {
+  getFace,
+  labelFaces,
+  listFaceGroups,
+  listPeople,
+} from "@/lib/actions/faces"
+import {
   deletePhoto,
   getPhoto,
   getPhotoFile,
@@ -56,6 +62,10 @@ export const actions: Action[] = [
   setPhotoTags,
   renameTag,
   deleteTag,
+  listPeople,
+  listFaceGroups,
+  labelFaces,
+  getFace,
   listMembers,
   listAdmins,
   grantAdmin,
