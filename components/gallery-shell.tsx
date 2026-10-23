@@ -1,14 +1,16 @@
-import { AppShell } from "@/components/app-shell"
+import {
+  AppShell,
+  BuildVersion,
+  CornerLink,
+  CornerTip,
+} from "@/components/app-shell"
+import { GalleryCorners } from "@/components/gallery-corners"
 import { LiveRefresh } from "@/components/live-refresh"
 import { getSession } from "@/lib/auth/session"
 
-const nav = [
-  { label: "照片牆", href: "/", tip: "" },
-  { label: "上傳", href: "/upload", tip: "" },
-]
-
-// The gallery's corners: the lab and the page in the breadcrumb, the
-// gallery's pages and the member's account in the top right.
+// The gallery's corners: the lab and the page in the breadcrumb, search and
+// upload in the top right (both open over the page), the member's account
+// next to the build in the bottom left.
 export async function GalleryShell({
   page,
   layout,
@@ -23,24 +25,25 @@ export async function GalleryShell({
     <AppShell
       layout={layout}
       breadcrumb={[
-        {
-          label: "WinLab",
-          href: "https://portal.winlab.tw",
-          tip: "",
-        },
+        { label: "WinLab", href: "https://portal.winlab.tw", tip: "" },
         { label: "Gallery", href: "/", tip: "" },
         ...(page ? [page] : []),
       ]}
-      nav={nav}
-      account={
-        session
-          ? {
-              label: session.user.name,
-              href: "/profile",
-              tip: session.user.email,
-            }
-          : { label: "登入", href: "/sign-in", tip: "auth.winlab.tw" }
-      }
+      corners={{
+        topRight: <GalleryCorners />,
+        bottomLeft: (
+          <>
+            {session && (
+              <CornerTip tip={session.user.email} corner="bottom-left">
+                <CornerLink href="/profile" prefetch>
+                  {session.user.name}
+                </CornerLink>
+              </CornerTip>
+            )}
+            <BuildVersion />
+          </>
+        ),
+      }}
     >
       <LiveRefresh />
       {children}

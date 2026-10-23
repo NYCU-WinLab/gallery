@@ -13,6 +13,7 @@ import { getPhotoFile } from "@/lib/nextcloud"
 const NAME_WEIGHT = 0.3
 const KEEP_ABOVE_SD = 1.5
 const MAX_RESULTS = 96
+const MIN_FOR_CUTOFF = 20
 
 /** Cards that match query by meaning, best first: the id each wall card
  * shows (a sequence's first photo) with its best photo's score. Null when
@@ -45,7 +46,9 @@ export async function searchByMeaning(query: string) {
   const sd = Math.sqrt(
     scores.reduce((a, b) => a + (b - mean) ** 2, 0) / scores.length
   )
-  const cutoff = mean + KEEP_ABOVE_SD * sd
+  // With few photos the spread says little; rank them all instead.
+  const cutoff =
+    rows.length < MIN_FOR_CUTOFF ? -Infinity : mean + KEEP_ABOVE_SD * sd
   // A sequence scores as its best photo and shows as its first.
   const cards = new Map<string, number>()
   for (const [i, row] of rows.entries()) {
