@@ -53,7 +53,10 @@ const isCover = or(
   isNull(photos.sequenceId),
   sql`${photos.sequenceIndex} = (select min(s.sequence_index) from ${photos} s where s.sequence_id = ${photos.sequenceId})`
 )!
-const reactionCount = sql<number>`(select count(*)::int from photo_reactions r where r.photo_id = ${photos.id})`
+// Each reaction on the photo with how many picked it, e.g. { haha: 2, love: 1 }.
+const reactionCounts = sql<
+  Record<string, number>
+>`(select coalesce(jsonb_object_agg(reaction, n), '{}'::jsonb) from (select reaction, count(*)::int n from photo_reactions r where r.photo_id = ${photos.id} group by reaction) c)`
 
 const wallInput = z.object({
   query: z.string().trim().max(100).optional(),
@@ -96,7 +99,7 @@ export const listPhotos = defineAction({
       .select({
         ...card,
         sequenceSize,
-        reactionCount,
+        reactionCounts,
       })
       .from(photos)
       .leftJoin(user, eq(user.id, photos.uploaderId))

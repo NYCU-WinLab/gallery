@@ -9,20 +9,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { reactionEmoji as emoji } from "@/lib/reactions"
 import { cn } from "@/lib/utils"
 
 import { react } from "../../actions"
 
-const emoji = {
-  like: "👍",
-  love: "❤️",
-  haha: "😂",
-  wow: "😮",
-  sad: "😢",
-  angry: "😡",
-  point: "👉👈",
-  cheers: "🍻",
-} as const
 type Reaction = keyof typeof emoji
 
 // One reaction per member: each button shows how many picked it and, on
