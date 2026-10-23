@@ -15,6 +15,13 @@
       "when": 1792741357855,
       "tag": "0001_drop_albums",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792744904998,
+      "tag": "0002_photo_vectors",
+      "breakpoints": true
     }
   ]
 }

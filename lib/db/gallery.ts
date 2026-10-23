@@ -134,6 +134,19 @@ export const photoTags = pgTable(
   ]
 )
 
+// What a photo shows and what it is called, as EmbeddingGemma 2 vectors,
+// for search by meaning. The embedder fills rows in the background; nameText
+// is the name the name vector was made from, so a rename gets a new one.
+export const photoVectors = pgTable("photo_vectors", {
+  photoId: uuid()
+    .primaryKey()
+    .references(() => photos.id, { onDelete: "cascade" }),
+  image: real().array().notNull(),
+  name: real().array().notNull(),
+  nameText: text().notNull(),
+  updatedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+})
+
 export const favorites = pgTable(
   "favorites",
   {
