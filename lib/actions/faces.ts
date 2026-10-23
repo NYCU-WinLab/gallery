@@ -249,9 +249,14 @@ async function scanPending(limit: number) {
     } catch (error) {
       // One bad photo must not stall the rest; a service that is down
       // fails every photo, so the batch stops here and retries later.
-      const count = (failures.get(id) ?? 0) + 1
-      failures.set(id, count)
-      if (count >= MAX_FAILURES) skipped.add(id)
+      // Only a failure on this photo counts against it, not the service
+      // being unreachable or still loading its models.
+      const message = error instanceof Error ? error.message : ""
+      if (!/still loading|fetch failed|aborted|timeout/i.test(message)) {
+        const count = (failures.get(id) ?? 0) + 1
+        failures.set(id, count)
+        if (count >= MAX_FAILURES) skipped.add(id)
+      }
       throw error
     }
     failures.delete(id)
