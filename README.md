@@ -15,21 +15,21 @@
 
 [![CI](https://github.com/NYCU-WinLab/gallery/actions/workflows/ci.yml/badge.svg)](https://github.com/NYCU-WinLab/gallery/actions) &nbsp;[![Image](https://img.shields.io/badge/image-ghcr.io%2Fnycu--winlab%2Fgallery-111111)](https://github.com/NYCU-WinLab/gallery/pkgs/container/gallery) &nbsp;[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](#license)
 
-WinLab members share lab photos here: upload from a phone, react and tag. Only signed-in members see anything; every file passes through the app, which checks the session first.
+WinLab members share lab photos here: upload from a phone, react, and find who is in them. Only signed-in members see anything; every file passes through the app, which checks the session first.
 
 ```
 > "What did we post from last year's orientation?"
-  ⚡ list_photos { "tag": "迎新" }
+  ⚡ list_photos { "query": "迎新" }
 ✓ { "photos": [{ "name": "合照", "sequenceSize": 6, ... }], "nextOffset": null }
 ```
 
 ## What it does
 
-- **Shows the wall**: newest taken first, photos uploaded together as one card, filtered by search, tag or uploader.
-- **Searches by meaning**: "生日蛋糕" finds the cake photos even when nobody named or tagged them, through EmbeddingGemma 2 vectors of each photo (optional; off, search matches text only).
+- **Shows the wall**: newest taken first, photos uploaded together as one card, filtered by search, uploader or person.
+- **Searches by meaning**: "生日蛋糕" finds the cake photos even when nobody named them, through EmbeddingGemma 2 vectors of each photo (optional; off, search matches text only).
 - **Takes uploads**: photos up to 30 MB (HEIC turns into JPEG) and videos up to 60 seconds and 100 MB (re-encoded to 720p H.264).
 - **Stores files in Nextcloud** under one folder of one account, with a 480 px and a 2048 px WebP made at upload.
-- **Lets members react and tag**: 8 reactions and tags.
+- **Lets members react**: 8 reactions.
 - **Serves MCP** at `/mcp`, with the gallery as the OAuth 2.1 authorization server.
 
 ## Deploy

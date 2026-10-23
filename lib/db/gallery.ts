@@ -78,28 +78,6 @@ export const photoReactions = pgTable(
   ]
 )
 
-export const tags = pgTable("tags", {
-  id: uuid().primaryKey().defaultRandom(),
-  name: text().notNull().unique(),
-  createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
-})
-
-export const photoTags = pgTable(
-  "photo_tags",
-  {
-    photoId: uuid()
-      .notNull()
-      .references(() => photos.id, { onDelete: "cascade" }),
-    tagId: uuid()
-      .notNull()
-      .references(() => tags.id, { onDelete: "cascade" }),
-  },
-  (table) => [
-    primaryKey({ columns: [table.photoId, table.tagId] }),
-    index("photo_tags_tag").on(table.tagId),
-  ]
-)
-
 // What a photo shows and what it is called, as EmbeddingGemma 2 vectors,
 // for search by meaning. The embedder fills rows in the background; nameText
 // is the name the name vector was made from, so a rename gets a new one.

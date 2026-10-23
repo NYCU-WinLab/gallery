@@ -76,7 +76,7 @@ export function GalleryCorners() {
   )
 }
 
-// Results as you type, by name, tag, uploader and what the photo shows.
+// Results as you type, by name, uploader and what the photo shows.
 function SearchPanel({ onPick }: { onPick: () => void }) {
   const [query, setQuery] = React.useState("")
   const [results, setResults] = React.useState<GridPhoto[] | null>(null)

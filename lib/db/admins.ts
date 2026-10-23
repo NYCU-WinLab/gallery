@@ -2,7 +2,7 @@ import { pgTable, timestamp, uuid } from "drizzle-orm/pg-core"
 
 import { user } from "@/lib/db/auth-schema"
 
-// Gallery admins: they pin photos and comments and run the tags. One row per
+// Gallery admins: they name faces and edit or delete any photo. One row per
 // admin, so two admins editing at once cannot overwrite each other.
 export const admins = pgTable("admins", {
   userId: uuid()

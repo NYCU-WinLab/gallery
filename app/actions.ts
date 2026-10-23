@@ -11,7 +11,6 @@ import {
   updatePhoto,
 } from "@/lib/actions/photos"
 import { labelFaces } from "@/lib/actions/faces"
-import { deleteTag, renameTag, setPhotoTags } from "@/lib/actions/tags"
 import { requireActor } from "@/lib/auth/session"
 
 // Every page's writes, one wrapper each. A failure comes back as { error }
@@ -35,10 +34,6 @@ export const loadPhotos = async (input: unknown) => call(listPhotos, input)
 export const savePhoto = async (input: unknown) => call(updatePhoto, input)
 export const removePhoto = async (input: unknown) => call(deletePhoto, input)
 export const react = async (input: unknown) => call(setReaction, input)
-export const saveTags = async (input: unknown) => call(setPhotoTags, input)
-
-export const saveTagName = async (input: unknown) => call(renameTag, input)
-export const removeTag = async (input: unknown) => call(deleteTag, input)
 
 export const nameFaces = async (input: unknown) => call(labelFaces, input)
 

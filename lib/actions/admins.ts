@@ -109,8 +109,7 @@ export async function memberUserId(id: string) {
 export const listAdmins = defineAction({
   name: "list_admins",
   title: "管理員名單",
-  description:
-    "Gallery admins: they name faces, run the tags, and edit or delete any photo.",
+  description: "Gallery admins: they name faces and edit or delete any photo.",
   kind: "query",
   input: z.object({}),
   run: async () =>

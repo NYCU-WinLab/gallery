@@ -21,12 +21,6 @@ import {
   updatePhoto,
   uploadPhoto,
 } from "@/lib/actions/photos"
-import {
-  deleteTag,
-  listTags,
-  renameTag,
-  setPhotoTags,
-} from "@/lib/actions/tags"
 import { whoami } from "@/lib/actions/users"
 
 /** Every action, in the order MCP lists them. */
@@ -40,10 +34,6 @@ export const actions: Action[] = [
   updatePhoto,
   deletePhoto,
   setReaction,
-  listTags,
-  setPhotoTags,
-  renameTag,
-  deleteTag,
   listPeople,
   listFaceGroups,
   labelFaces,
