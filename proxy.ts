@@ -16,6 +16,6 @@ export const config = {
   // (they check the session themselves, and proxy would buffer the body and
   // cut it at 10 MB), discovery documents and static files.
   matcher: [
-    "/((?!(?:sign-in|consent|api/auth|api/upload|mcp|\\.well-known|_next/static|_next/image)(?:/|$)|favicon.ico$|icon.svg$).*)",
+    "/((?!(?:sign-in|consent|api/auth|api/upload|mcp|\\.well-known|_next/static|_next/image)(?:/|$)|icon\\.png$|apple-icon\\.png$).*)",
   ],
 }
