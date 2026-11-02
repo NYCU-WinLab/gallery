@@ -48,6 +48,8 @@ This starts Postgres, runs the migrations once, then serves the gallery from `gh
 > [!IMPORTANT]
 > Put a reverse proxy with TLS in front, at the host in `BETTER_AUTH_URL`, and let it pass request bodies of 100 MB. MCP clients only accept an HTTPS resource, and the Keycloak redirect URI must match it.
 
+gallery.winlab.tw deploys on every push to `main`. The release workflow pushes the image, then sends a Carrel app release (`winfra/gallery`). On the machine, carrel-deployd runs [deploy/carrel-start.sh](deploy/carrel-start.sh): it sets `GALLERY_VERSION` in `/opt/gallery/.env` and waits until web is healthy. A failed health check rolls back to the previous release. The app unit has a drop-in with `Type=notify`, `NotifyAccess=all` and `TimeoutStartSec=300`, so the check waits for the new container.
+
 ## Use
 
 1. In your Keycloak realm, create a confidential OpenID Connect client with the redirect URI `<BETTER_AUTH_URL>/api/auth/callback/keycloak`, and put its ID and secret in `.env`. Give its service account `view-users` so `/mcp` can check that a member still exists.
