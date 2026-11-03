@@ -4,12 +4,7 @@ WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 COPY . .
-# The build corner shows the commit, links its CD run and tips the time.
-ARG BUILD_SHA BUILD_TIME BUILD_URL
-ENV NEXT_PUBLIC_BUILD_SHA=$BUILD_SHA \
-    NEXT_PUBLIC_BUILD_TIME=$BUILD_TIME \
-    NEXT_PUBLIC_BUILD_URL=$BUILD_URL \
-    NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_TELEMETRY_DISABLED=1
 RUN bun run build \
  && bun build scripts/migrate.ts --target node --external pg-native --outfile migrate.mjs
 
@@ -25,6 +20,10 @@ ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0 \
     MEDIA_CACHE_DIR=/data/cache
 # EXIF times carry no zone; the lab's cameras are in Taipei.
 ENV TZ=Asia/Taipei
+# The build corner tips the time and links the run. Last, so a new run
+# reuses every layer above; the commit comes from GALLERY_VERSION at run time.
+ARG BUILD_TIME BUILD_URL
+ENV BUILD_TIME=$BUILD_TIME BUILD_URL=$BUILD_URL
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
