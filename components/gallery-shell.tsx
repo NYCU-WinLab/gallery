@@ -7,6 +7,7 @@ import {
 import { GalleryCorners } from "@/components/gallery-corners"
 import { LiveRefresh } from "@/components/live-refresh"
 import { getSession } from "@/lib/auth/session"
+import { runningBuild } from "@/lib/build"
 
 // The gallery's corners: the lab and the page in the breadcrumb, the pages
 // then search and upload in the top right (both open over the page), the
@@ -44,7 +45,7 @@ export async function GalleryShell({
                 </CornerLink>
               </CornerTip>
             )}
-            <BuildVersion />
+            <BuildVersion build={runningBuild()} />
           </>
         ),
       }}

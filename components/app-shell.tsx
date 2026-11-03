@@ -33,6 +33,9 @@ type NavItem = { label: string; href: string; tip: string }
 // name, then items such as 登出 (DropdownMenuItem children).
 type AccountMenu = { label: string; tip: string; menu: React.ReactNode }
 
+// The build running: the short commit, the build time and the CD run.
+type Build = { sha?: string; time?: string; url?: string }
+
 // The chrome of every WinLab app is its four corners. By default each corner
 // has one job, filled from the props below; an app that needs something else
 // in a corner passes it in `corners`, built from CornerLink and CornerTip so
@@ -60,6 +63,7 @@ function AppShell({
   account,
   layout = "column",
   corners,
+  build,
   children,
 }: {
   breadcrumb?: Crumb[]
@@ -77,6 +81,9 @@ function AppShell({
     >
   >
   layout?: "column" | "spotlight" | "wide"
+  /** The build running, read on the server at run time (see BuildVersion).
+   * Without it the corner falls back to NEXT_PUBLIC_BUILD_*. */
+  build?: Build
   children: React.ReactNode
 }) {
   const pathname = usePathname()
@@ -138,7 +145,7 @@ function AppShell({
       </div>
 
       <div className="fixed bottom-6 left-6 z-50 flex items-center gap-4">
-        {corners?.bottomLeft ?? <BuildVersion />}
+        {corners?.bottomLeft ?? <BuildVersion build={build} />}
       </div>
 
       <div className="fixed right-6 bottom-6 z-50 flex items-center gap-4">
@@ -301,12 +308,15 @@ const cornerLinkClassName =
   "relative inline-flex h-6 items-center text-muted-foreground transition-colors duration-state outline-none after:absolute after:-inset-2 hover:text-foreground focus-visible:text-foreground"
 
 // Which build is running: the short commit, linking to the CD run that built
-// it, with the build time as its tip. CD sets these at build time; without
-// them (local dev) the corner says "dev".
-function BuildVersion() {
-  const sha = process.env.NEXT_PUBLIC_BUILD_SHA
-  const time = process.env.NEXT_PUBLIC_BUILD_TIME
-  const url = process.env.NEXT_PUBLIC_BUILD_URL
+// it, with the build time as its tip. CI builds the image on the pull
+// request and merging only retags it, so the commit is not known at build
+// time: a server app reads it at run time and passes `build`. A static site
+// builds with NEXT_PUBLIC_BUILD_* instead. Without a commit (local dev) the
+// corner says "dev".
+function BuildVersion({ build }: { build?: Build }) {
+  const sha = build?.sha ?? process.env.NEXT_PUBLIC_BUILD_SHA
+  const time = build?.time ?? process.env.NEXT_PUBLIC_BUILD_TIME
+  const url = build?.url ?? process.env.NEXT_PUBLIC_BUILD_URL
   if (!sha) {
     return <span className={cornerLinkClassName}>dev</span>
   }
@@ -337,4 +347,5 @@ function CornerLink({
   return <Link className={cn(cornerLinkClassName, className)} {...props} />
 }
 
+export type { Build }
 export { AppShell, BuildVersion, CornerLink, CornerTip, cornerLinkClassName }
