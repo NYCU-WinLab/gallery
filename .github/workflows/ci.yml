@@ -23,7 +23,7 @@ jobs:
   # them as candidate-<tree>. promote makes them tree-<tree> once every job
   # passed, and release ships only tree- images.
   image:
-    uses: zyx1121/.github/.github/workflows/image.yml@main
+    uses: zyx1121/.github/.github/workflows/image.yml@ci/slim
     permissions:
       contents: read
       packages: write
