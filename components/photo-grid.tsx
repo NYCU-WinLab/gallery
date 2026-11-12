@@ -41,7 +41,9 @@ export function PhotoCard({ photo }: { photo: GridPhoto }) {
           decoding="async"
           className="block h-auto w-full transition-opacity duration-state group-hover:opacity-90"
         />
-        <span className="absolute top-2 right-2 flex gap-1">
+        {/* 4px in: the pill badge (12px) is concentric with the
+            thumbnail's 16px corner. */}
+        <span className="absolute top-1 right-1 flex gap-1">
           {photo.mediaType === "video" && (
             <Badge>
               <PlayIcon />

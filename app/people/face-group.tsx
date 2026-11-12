@@ -55,8 +55,9 @@ export function FaceGroup({
             aria-label={left.has(face.id) ? "加回這張臉" : "排除這張臉"}
             onClick={() => toggle(face.id)}
             className={cn(
-              "size-14 overflow-hidden rounded-full bg-muted transition-opacity duration-state",
-              left.has(face.id) && "opacity-30"
+              "size-14 overflow-hidden rounded-full bg-muted transition-all duration-state",
+              // Faded and gray: left out reads without relying on one cue.
+              left.has(face.id) && "opacity-30 grayscale"
             )}
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- served by /media behind the session */}
