@@ -3,14 +3,13 @@
 import * as React from "react"
 import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button"
+import { Toggle } from "@/components/ui/toggle"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { reactionEmoji as emoji } from "@/lib/reactions"
-import { cn } from "@/lib/utils"
 
 import { react } from "../../actions"
 
@@ -54,14 +53,11 @@ export function Reactions({
           <Tooltip key={reaction}>
             <TooltipTrigger
               render={
-                <Button
-                  variant="outline"
-                  aria-pressed={optimistic === reaction}
-                  onClick={() => pick(reaction)}
-                  className={cn(
-                    "rounded-full tabular-nums",
-                    optimistic === reaction && "border-primary bg-primary/10"
-                  )}
+                <Toggle
+                  size="text"
+                  pressed={optimistic === reaction}
+                  onPressedChange={() => pick(reaction)}
+                  className="rounded-full tabular-nums"
                 />
               }
             >
